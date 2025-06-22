@@ -3,7 +3,7 @@
 import { Authenticated, Unauthenticated } from 'convex/react'
 import PublicLayout from '@/components/PublicLayout'
 import AuthLayout from '@/components/AuthLayout'
-// import { api } from "@/convex/_generated/api";
+// import { api } from "@convex/_generated/api";
 // import { usePathname, useRouter } from "next/navigation";
 
 export function AuthWrapper({ children }: { children: React.ReactNode }) {

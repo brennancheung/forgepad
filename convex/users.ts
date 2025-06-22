@@ -43,10 +43,24 @@ export const upsertUser = mutation({
     const userId = await ctx.db.insert('users', args)
 
     // Create default workspace for new user
-    await ctx.db.insert('workspaces', {
+    const now = Date.now()
+    const workspaceId = await ctx.db.insert('workspaces', {
       name: 'Default Workspace',
       userId,
       isDefault: true,
+      createdAt: now,
+      updatedAt: now,
+    })
+    
+    // Create a default stack in the default workspace
+    await ctx.db.insert('stacks', {
+      name: 'Main',
+      workspaceId,
+      userId,
+      cells: [],
+      order: 0,
+      createdAt: now,
+      updatedAt: now,
     })
 
     return userId
@@ -67,19 +81,21 @@ export const deleteUser = mutation({
       throw new Error('User not found')
     }
 
-    // Delete all user's cells, stacks, and workspaces
+    // Delete all user's workspaces and associated data
     const workspaces = await ctx.db
       .query('workspaces')
       .withIndex('by_user', (q) => q.eq('userId', user._id))
       .collect()
 
     for (const workspace of workspaces) {
+      // Delete all stacks in this workspace
       const stacks = await ctx.db
         .query('stacks')
         .withIndex('by_workspace', (q) => q.eq('workspaceId', workspace._id))
         .collect()
 
       for (const stack of stacks) {
+        // Delete all cells in each stack
         const cells = await ctx.db
           .query('cells')
           .withIndex('by_stack', (q) => q.eq('stackId', stack._id))
@@ -90,6 +106,16 @@ export const deleteUser = mutation({
         }
 
         await ctx.db.delete(stack._id)
+      }
+
+      // Delete all operations for this workspace
+      const operations = await ctx.db
+        .query('operations')
+        .withIndex('by_workspace', (q) => q.eq('workspaceId', workspace._id))
+        .collect()
+      
+      for (const operation of operations) {
+        await ctx.db.delete(operation._id)
       }
 
       await ctx.db.delete(workspace._id)

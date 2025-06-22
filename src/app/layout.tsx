@@ -17,8 +17,8 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'Photovenio',
-  description: 'CRM and event management for photoshoot organizers',
+  title: 'Forgepad.ai',
+  description: 'Enhanced stack-based LLM interaction paradigm for constructing, routing, and visualizing iterative workflows',
 }
 
 export default function RootLayout({

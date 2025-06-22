@@ -11,33 +11,97 @@ export default defineSchema({
 
   workspaces: defineTable({
     name: v.string(),
+    description: v.optional(v.string()),
     userId: v.id('users'),
-    isDefault: v.boolean(),
+    settings: v.optional(v.object({
+      defaultModel: v.optional(v.string()),
+      temperature: v.optional(v.number()),
+      maxTokens: v.optional(v.number()),
+    })),
+    isDefault: v.optional(v.boolean()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
   })
     .index('by_user', ['userId'])
-    .index('by_user_default', ['userId', 'isDefault']),
+    .index('by_user_and_name', ['userId', 'name']),
 
   stacks: defineTable({
     name: v.string(),
     workspaceId: v.id('workspaces'),
     userId: v.id('users'),
+    cells: v.array(v.id('cells')),
+    order: v.optional(v.number()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
   })
     .index('by_workspace', ['workspaceId'])
     .index('by_user', ['userId']),
 
   cells: defineTable({
     stackId: v.id('stacks'),
-    position: v.number(),
-    name: v.optional(v.string()),
+    stackPosition: v.number(),
+    name: v.optional(v.string()),  // for named cells
+    content: v.string(),
     type: v.union(
+      v.literal('text'),
       v.literal('prompt'),
       v.literal('response'),
       v.literal('data'),
+      v.literal('code'),
       v.literal('widget')
     ),
-    content: v.any(),
-    metadata: v.optional(v.any()),
+    status: v.union(
+      v.literal('pending'),
+      v.literal('streaming'),
+      v.literal('complete'),
+      v.literal('error'),
+      v.literal('cancelled')
+    ),
+    error: v.optional(v.string()),
+    metadata: v.optional(v.object({
+      prompt: v.optional(v.string()),
+      model: v.optional(v.string()),
+      temperature: v.optional(v.number()),
+      maxTokens: v.optional(v.number()),
+      startedAt: v.optional(v.number()),
+      completedAt: v.optional(v.number()),
+      tokenCount: v.optional(v.number()),
+      streamedChunks: v.optional(v.number()),
+    })),
+    structuredData: v.optional(v.any()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
   })
     .index('by_stack', ['stackId'])
-    .index('by_stack_position', ['stackId', 'position']),
+    .index('by_stack_position', ['stackId', 'stackPosition']),
+
+  operations: defineTable({
+    workspaceId: v.id('workspaces'),
+    stackId: v.id('stacks'),
+    type: v.union(
+      // Stack operations
+      v.literal('push'),
+      v.literal('pop'),
+      v.literal('duplicate'),
+      v.literal('swap'),
+      v.literal('rotate'),
+      v.literal('copy'),
+      v.literal('move'),
+      // LLM operations
+      v.literal('query'),
+      v.literal('expand'),
+      v.literal('filter'),
+      v.literal('merge'),
+      v.literal('summarize'),
+      v.literal('transform')
+    ),
+    inputCells: v.array(v.id('cells')),
+    outputCell: v.optional(v.id('cells')),
+    targetStackId: v.optional(v.id('stacks')), // for cross-stack operations
+    parameters: v.optional(v.record(v.string(), v.any())),
+    duration: v.optional(v.number()),
+    createdAt: v.number(),
+  })
+    .index('by_workspace', ['workspaceId'])
+    .index('by_stack', ['stackId']),
 })

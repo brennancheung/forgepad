@@ -5,9 +5,8 @@ import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { CalendarDays, Users, Camera, CheckCircle } from 'lucide-react'
+import { Layers, GitBranch, Database, Sparkles } from 'lucide-react'
 import Link from 'next/link'
-import Image from 'next/image'
 
 export default function Home() {
   const { isLoaded, userId } = useAuth()
@@ -24,9 +23,9 @@ export default function Home() {
   return (
     <div className="min-h-screen">
       <section className="container mx-auto px-6 py-24 text-center">
-        <h1 className="text-5xl font-bold mb-6">Welcome to Photovenio</h1>
+        <h1 className="text-5xl font-bold mb-6">Forgepad.ai</h1>
         <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-          The all-in-one platform for organizing and managing photoshoot events with ease
+          Enhanced stack-based LLM interaction paradigm for constructing, routing, and visualizing iterative workflows
         </p>
         <div className="flex gap-4 justify-center">
           <Button size="lg" asChild>
@@ -40,52 +39,52 @@ export default function Home() {
 
       <section className="bg-muted/50 py-16">
         <div className="container mx-auto px-6">
-          <h2 className="text-3xl font-bold text-center mb-12">Why Choose Photovenio?</h2>
+          <h2 className="text-3xl font-bold text-center mb-12">Core Features</h2>
           <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
             <Card>
               <CardHeader>
-                <Users className="h-10 w-10 mb-2 text-primary" />
-                <CardTitle>Contact Management</CardTitle>
+                <Layers className="h-10 w-10 mb-2 text-primary" />
+                <CardTitle>Interactive Stack</CardTitle>
               </CardHeader>
               <CardContent>
                 <CardDescription>
-                  Import and organize your models, photographers, and crew members in one place
+                  RPN-inspired LIFO structure for composable LLM-driven workflows with real-time manipulation
                 </CardDescription>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader>
-                <CalendarDays className="h-10 w-10 mb-2 text-primary" />
-                <CardTitle>Event Planning</CardTitle>
+                <GitBranch className="h-10 w-10 mb-2 text-primary" />
+                <CardTitle>Multiple Workspaces</CardTitle>
               </CardHeader>
               <CardContent>
                 <CardDescription>
-                  Create photoshoot events, send invitations, and track RSVPs effortlessly
+                  Create and manage multiple named stacks for different contexts and workflows
                 </CardDescription>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader>
-                <CheckCircle className="h-10 w-10 mb-2 text-primary" />
-                <CardTitle>Real-time Check-ins</CardTitle>
+                <Database className="h-10 w-10 mb-2 text-primary" />
+                <CardTitle>Named Cells</CardTitle>
               </CardHeader>
               <CardContent>
                 <CardDescription>
-                  Manage attendee check-ins and track participation during your events
+                  Persistent storage with stack items referenced by position or custom names
                 </CardDescription>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader>
-                <Camera className="h-10 w-10 mb-2 text-primary" />
-                <CardTitle>Instagram Integration</CardTitle>
+                <Sparkles className="h-10 w-10 mb-2 text-primary" />
+                <CardTitle>Rich Visualizations</CardTitle>
               </CardHeader>
               <CardContent>
                 <CardDescription>
-                  Import contacts directly from Instagram and build your network faster
+                  Interactive widgets and custom renderers for markdown, JSON, graphs, and more
                 </CardDescription>
               </CardContent>
             </Card>
@@ -95,29 +94,48 @@ export default function Home() {
 
       <section className="container mx-auto px-6 py-16">
         <div className="text-center">
-          <h2 className="text-3xl font-bold mb-4">Ready to streamline your photoshoots?</h2>
+          <h2 className="text-3xl font-bold mb-4">Primary Use Cases</h2>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 max-w-4xl mx-auto mb-12">
+            <div className="p-4 rounded-lg bg-muted/30">
+              <h3 className="font-semibold mb-2">Interactive Deep Research</h3>
+            </div>
+            <div className="p-4 rounded-lg bg-muted/30">
+              <h3 className="font-semibold mb-2">Prompt Engineering</h3>
+            </div>
+            <div className="p-4 rounded-lg bg-muted/30">
+              <h3 className="font-semibold mb-2">Data Analysis & Insights</h3>
+            </div>
+            <div className="p-4 rounded-lg bg-muted/30">
+              <h3 className="font-semibold mb-2">Agentic Flow Debugging</h3>
+            </div>
+          </div>
           <p className="text-lg text-muted-foreground mb-8">
-            Join photographers and event organizers who trust Photovenio
+            Experience the future of LLM interaction with our stack-based paradigm
           </p>
           <Button size="lg" asChild>
-            <Link href="/sign-up">Start Free Trial</Link>
+            <Link href="/sign-up">Start Building</Link>
           </Button>
         </div>
       </section>
 
       <section className="py-16">
         <div className="container mx-auto px-6">
-          <h2 className="text-3xl font-bold text-center mb-12">What Our Users Say</h2>
-          <div className="flex justify-center">
-            <div className="max-w-sm">
-              <Image
-                src="/testimonial-mikey.jpg"
-                alt="Event testimonial"
-                width={400}
-                height={300}
-                className="rounded-lg shadow-lg w-full h-auto"
-              />
-            </div>
+          <h2 className="text-3xl font-bold text-center mb-8">Example Command Flow</h2>
+          <div className="max-w-3xl mx-auto">
+            <Card className="bg-muted/20">
+              <CardContent className="p-6">
+                <pre className="text-sm overflow-x-auto">
+                  <code>{`"Deep learning overview" query expand
+save-cell dl-overview
+new-stack cnn-branch
+new-stack transformers-branch
+"CNN" filter push-stack cnn-branch
+"Transformers" filter push-stack transformers-branch
+switch-stack cnn-branch
+deep-dive interactive-filter summarize`}</code>
+                </pre>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </section>

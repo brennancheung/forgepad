@@ -2,7 +2,7 @@
 
 import React from 'react'
 import { AppSidebar } from '@/components/AppSidebar'
-import { PageHeader } from '@/components/PageHeader'
+import { StatusBar } from '@/components/StatusBar'
 import { Separator } from '@/components/ui/separator'
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar'
 import { ThemeToggle } from '@/components/ThemeToggle'
@@ -18,11 +18,11 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
       <SidebarProvider>
         <AppSidebar />
         <SidebarInset>
-          <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-            <SidebarTrigger className="-ml-1" />
+          <header className="flex h-10 shrink-0 items-center gap-2 border-b px-4 bg-muted/30">
+            <SidebarTrigger className="-ml-1 h-7 w-7" />
             <Separator orientation="vertical" className="mr-2 h-4" />
             <div className="flex-1">
-              <PageHeader />
+              <StatusBar />
             </div>
             <ThemeToggle />
           </header>
