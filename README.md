@@ -1,36 +1,161 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Forgepad.ai
 
-## Getting Started
+## Enhanced Stack-based LLM Interaction Paradigm
 
-First, run the development server:
+**Purpose:**
+Develop an interactive, composable, stack-based user experience for constructing, routing, and visualizing iterative, LLM-driven workflows.
+
+---
+
+## 📌 Core Concepts
+
+* **Interactive Stack** (Concatenative / RPN-inspired)
+* **Multiple Stacks (Workspaces)**
+* **Named Cells** (persistent named storage)
+* **Interactive Widgets** (user-driven filtering and selections)
+* **Card Viewers** (rich visualization of LLM outputs)
+* **Custom Renderers** (specialized visualization based on data type)
+* **Incremental Composability** (concise command chaining)
+* **Real-time Feedback**
+
+---
+
+## 🎯 Key Features
+
+### Stack Operations:
+
+* Push, Pop, Swap, Dup, Drop, Merge, Split
+* Interactive reordering and manipulation
+
+### Multiple Stack Management:
+
+* Create, switch, delete stacks
+* Move and copy items between stacks
+
+### Named Cells:
+
+* Persistent storage and retrieval of stack items
+* List, delete, and overwrite cells
+
+### Interactive Widgets:
+
+* Multi-select, checkboxes, dropdowns
+* Custom filtering and decision points
+
+### Card Viewers:
+
+* Multi-pane visualization
+* Interactive renderings (markdown, JSON, graphs)
+
+### Custom Renderers:
+
+* Markdown, rich text
+* Tables, outlines, graph views
+
+### History & Undo:
+
+* Stack operation history
+* Undo/redo functionality
+
+### Search & Filtering:
+
+* Quick search within stacks and cells
+* Content-based filtering and highlights
+
+### Session Management:
+
+* Save/load stack state
+* Export/import sessions
+
+### Extensibility & API:
+
+* Clear extensibility for custom operations
+* Plugin-friendly design
+
+---
+
+## 🚩 Primary Use Cases
+
+* **Interactive Deep Research**
+* **Prompt Engineering**
+* **Data Analysis & Insight Extraction**
+* **Agentic Flow Debugging & Visualization**
+
+---
+
+## 📋 Technical Considerations
+
+* **Frontend:** React, Next.js, TailwindCSS
+* **Backend:** Lightweight REST/WebSocket (Vercel, Cloudflare Workers)
+* **Storage:** JSON-based serialization
+* **LLM Integration:** Multi-provider structured API
+* **Visualization:** Markdown rendering, graph visualization
+
+---
+
+## 🚧 Development Roadmap / SDLC Inputs
+
+* **Planning & Design:**
+
+  * Detailed feature breakdown
+  * Interactive prototyping
+  * Component & data model definition
+
+* **Implementation:**
+
+  * Core stack UI & ops
+  * Early LLM API integration
+  * Card viewer implementation
+
+* **Testing & Debugging:**
+
+  * Unit testing, interactive visual inspections
+
+* **Iteration & Refinement:**
+
+  * User feedback integration
+  * UX optimization
+
+---
+
+## 📖 Glossary of Terms
+
+| Term            | Definition                          |
+| --------------- | ----------------------------------- |
+| Stack           | Ordered LIFO data structure         |
+| Concatenative   | Chained command composition         |
+| Named Cell      | Persistent storage item             |
+| Widget          | Interactive selection UI            |
+| Viewer          | Detailed visual rendering pane      |
+| Custom Renderer | Specialized visualization component |
+| Workspace       | Independent stack environment       |
+
+---
+
+## 🧩 Example Command Sequence
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+"Deep learning overview" query expand
+save-cell dl-overview
+new-stack cnn-branch
+new-stack transformers-branch
+"CNN" filter push-stack cnn-branch
+"Transformers" filter push-stack transformers-branch
+switch-stack cnn-branch
+deep-dive interactive-filter summarize save-cell cnn-summary
+switch-stack main
+pull-stack cnn-branch
+pull-stack transformers-branch
+2 merge synthesize verify-references view-top
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🎨 UX Considerations
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+* Intuitive interactions
+* Instant feedback
+* Rich visualizations
+* Clear compositional patterns
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
