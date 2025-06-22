@@ -14,6 +14,7 @@ import type {
   FunctionReference,
 } from "convex/server";
 import type * as cells from "../cells.js";
+import type * as computationalStack from "../computationalStack.js";
 import type * as stacks from "../stacks.js";
 import type * as users from "../users.js";
 import type * as workspaces from "../workspaces.js";
@@ -28,6 +29,7 @@ import type * as workspaces from "../workspaces.js";
  */
 declare const fullApi: ApiFromModules<{
   cells: typeof cells;
+  computationalStack: typeof computationalStack;
   stacks: typeof stacks;
   users: typeof users;
   workspaces: typeof workspaces;

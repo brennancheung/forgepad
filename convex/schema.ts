@@ -31,6 +31,21 @@ export default defineSchema({
     userId: v.id('users'),
     cells: v.array(v.id('cells')),
     order: v.optional(v.number()),
+    computationalStack: v.optional(
+      v.array(
+        v.object({
+          type: v.union(
+            v.literal("number"),
+            v.literal("string"),
+            v.literal("array"),
+            v.literal("boolean"),
+            v.literal("cell")
+          ),
+          value: v.any(),
+          ephemeral: v.boolean(),
+        })
+      )
+    ),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
@@ -48,7 +63,8 @@ export default defineSchema({
       v.literal('response'),
       v.literal('data'),
       v.literal('code'),
-      v.literal('widget')
+      v.literal('widget'),
+      v.literal('computational')  // for persisted computational values
     ),
     status: v.union(
       v.literal('pending'),
@@ -67,6 +83,9 @@ export default defineSchema({
       completedAt: v.optional(v.number()),
       tokenCount: v.optional(v.number()),
       streamedChunks: v.optional(v.number()),
+      sourceType: v.optional(v.string()),  // for computational values
+      persisted: v.optional(v.boolean()),
+      createdAt: v.optional(v.number()),
     })),
     structuredData: v.optional(v.any()),
     createdAt: v.number(),
