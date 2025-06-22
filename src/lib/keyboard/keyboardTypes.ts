@@ -26,6 +26,7 @@ export interface InternalKeyboardState {
   pendingCount: number | null
   activeRegister: string | null
   lastCommand: string | null
+  lastCommandTime?: number
 }
 
 // UI state - only what components need to render

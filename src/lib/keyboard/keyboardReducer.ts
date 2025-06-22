@@ -49,7 +49,22 @@ export const processKeyWithKeymap = (
   key: string,
   keymap: Keymap
 ): InternalKeyboardState => {
-  // Escape always clears the buffer
+  // For single-key commands (including Escape), try to resolve directly first
+  const { command: singleKeyCommand } = resolveKeymap(keymap, key);
+  if (singleKeyCommand) {
+    const context = createContext(state);
+    const result = singleKeyCommand(context);
+    
+    return {
+      ...state,
+      ...(result.newKeyboardState || {}),
+      commandBuffer: '',
+      lastCommand: key,
+      lastCommandTime: Date.now(),
+    }
+  }
+  
+  // If Escape wasn't found in keymap, just clear the buffer
   if (key === '<Escape>') {
     return {
       ...state,
@@ -71,6 +86,8 @@ export const processKeyWithKeymap = (
       ...(result.newKeyboardState || {}),
       commandBuffer: '',
       lastCommand: newBuffer,
+      // Add a timestamp to ensure repeated commands are detected
+      lastCommandTime: Date.now(),
     }
   }
   

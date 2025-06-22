@@ -21,7 +21,7 @@ export const categorizeKey = (event: KeyboardEvent): KeyCategory => {
   
   // Single character navigation keys
   if ('jkhlggG'.includes(key) && key.length === 1) return 'navigation';
-  if ('iaocrdxyp'.includes(key) && key.length === 1) return 'editing';
+  if ('iaocrdxypOPR'.includes(key) && key.length === 1) return 'editing';
   
   return 'text-input';
 }
@@ -69,6 +69,26 @@ export const shouldHandleKey = (
 ): boolean => {
   const category = categorizeKey(event);
   
+  // First check mode-specific handling
+  switch (keyboardState.mode) {
+    case 'insert':
+      // In insert mode, only handle escape
+      return category === 'escape';
+      
+    case 'command':
+      // In command mode, only handle escape and enter
+      return category === 'escape' || category === 'submit';
+      
+    case 'visual':
+      // Visual mode handles navigation and actions
+      break; // Continue to context check
+      
+    case 'normal':
+      // Normal mode handles most keys
+      break; // Continue to context check
+  }
+  
+  // Then check interaction context
   switch (context) {
     case 'cell-editing':
       // In cell editing, only handle escape and submit keys

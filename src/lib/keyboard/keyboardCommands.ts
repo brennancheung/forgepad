@@ -22,6 +22,11 @@ const enterInsertMode: Command = () => ({
   action: () => console.log('Enter insert mode'),
 });
 
+const appendMode: Command = () => ({
+  newKeyboardState: { mode: 'insert' },
+  action: () => console.log('Enter insert mode (append)'),
+});
+
 const enterCommandMode: Command = () => ({
   newKeyboardState: { mode: 'command' },
   action: () => console.log('Enter command mode'),
@@ -70,6 +75,31 @@ const previousWorkspace: Command = () => ({
   action: () => console.log('Previous workspace'),
 });
 
+const changeCell: Command = () => ({
+  newKeyboardState: { mode: 'insert' },
+  action: () => console.log('Change cell (clear and edit)'),
+});
+
+const replaceChar: Command = () => ({
+  action: () => console.log('Replace character'),
+});
+
+const dropCell: Command = () => ({
+  action: () => console.log('Drop current cell'),
+});
+
+const popStack: Command = () => ({
+  action: () => console.log('Pop from stack'),
+});
+
+const rotateStack: Command = () => ({
+  action: () => console.log('Rotate stack'),
+});
+
+const swapTop: Command = () => ({
+  action: () => console.log('Swap top two cells'),
+});
+
 // Normal mode keymap
 export const normalModeKeymap: Keymap = {
   // Navigation
@@ -88,6 +118,7 @@ export const normalModeKeymap: Keymap = {
   'd': {
     'd': deleteCell,
   },
+  'x': dropCell,
   'y': {
     'y': yankCell,
   },
@@ -96,9 +127,21 @@ export const normalModeKeymap: Keymap = {
   
   // Mode changes
   'i': enterInsertMode,
+  'a': appendMode,
   ':': enterCommandMode,
   'v': enterVisualMode,
   '/': enterSearchMode,
+  
+  // Cell operations
+  'c': {
+    'c': changeCell,
+  },
+  'r': replaceChar,
+  
+  // Direct stack actions
+  'u': popStack,
+  'R': rotateStack,
+  's': swapTop,
 }
 
 // Insert mode keymap (minimal - most keys handled by browser)

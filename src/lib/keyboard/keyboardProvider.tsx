@@ -8,14 +8,16 @@ import {
   Mode,
   KeyboardAction,
   Keymap,
-  Command
+  Command,
+  InteractionContext
 } from './keyboardTypes'
 import { 
   formatKey, 
   getInteractionContext, 
   shouldHandleKey,
   extractUIState,
-  shouldUpdateUI
+  shouldUpdateUI,
+  parseCommand
 } from './keyboardUtils'
 import { keyboardReducer, processKeyWithKeymap, initialState } from './keyboardReducer'
 import { defaultKeymaps } from './keyboardCommands'
@@ -52,6 +54,12 @@ export const KeyboardProvider: React.FC<KeyboardProviderProps> = ({
   const { focusContext } = useFocusTracking();
   const focusContextRef = useRef(focusContext);
   focusContextRef.current = focusContext;
+  
+  // Cache for interaction context to avoid repeated DOM traversal
+  const contextCacheRef = useRef<{
+    element: EventTarget | null;
+    context: InteractionContext;
+  }>({ element: null, context: 'stack-navigation' });
 
   // Keymaps ref to avoid stale closures
   const keymapsRef = useRef(keymaps);
@@ -80,24 +88,37 @@ export const KeyboardProvider: React.FC<KeyboardProviderProps> = ({
     
     if (!currentKeymap) return;
     
+    const oldLastCommand = currentState.lastCommand;
     const newState = processKeyWithKeymap(currentState, key, currentKeymap);
     
     // Update internal state
     internalStateRef.current = newState;
     
-    // Execute any action from the command
-    if (newState.lastCommand !== currentState.lastCommand && currentKeymap) {
+    // Check if a command was executed (lastCommand or timestamp changed)
+    if ((newState.lastCommand !== oldLastCommand || 
+         newState.lastCommandTime !== currentState.lastCommandTime) && 
+        newState.lastCommand && currentKeymap) {
       // A command was executed - find it and run its action
       const { command } = resolveKeymapCommand(currentKeymap, newState.lastCommand || '');
       if (command) {
+        // Parse the command to extract count
+        const parsed = parseCommand(newState.lastCommand || '');
         const context = {
-          state: currentState,
-          count: 1,
-          register: currentState.activeRegister || '"',
+          state: newState,
+          count: parsed?.count || 1,
+          register: newState.activeRegister || '"',
         }
         const result = command(context);
         if (result.action) {
           result.action();
+        }
+        
+        // If the command resulted in a mode change, update the state
+        if (result.newKeyboardState) {
+          const updatedState = { ...newState, ...result.newKeyboardState };
+          internalStateRef.current = updatedState;
+          setUiState(extractUIState(updatedState));
+          return;
         }
       }
     }
@@ -108,18 +129,38 @@ export const KeyboardProvider: React.FC<KeyboardProviderProps> = ({
     }
   }
 
+  // Clear context cache on focus changes
+  useEffect(() => {
+    // Reset cache when focus context changes
+    contextCacheRef.current = { element: null, context: 'stack-navigation' };
+  }, [focusContext]);
+  
   // Register handler ONCE
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      const context = getInteractionContext(event);
+      // Use cached context if the target element hasn't changed
+      let context: InteractionContext;
+      if (contextCacheRef.current.element === event.target) {
+        context = contextCacheRef.current.context;
+      } else {
+        // Only perform DOM traversal if target has changed
+        context = getInteractionContext(event);
+        contextCacheRef.current = {
+          element: event.target,
+          context: context
+        };
+      }
+      
       const currentState = internalStateRef.current;
       
       if (!shouldHandleKey(event, context, currentState)) {
         return;
       }
       
-      const key = formatKey(event);
+      // Only prevent default if we're actually handling the key
       event.preventDefault();
+      
+      const key = formatKey(event);
       processKeyRef.current?.(key);
     }
     

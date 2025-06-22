@@ -82,19 +82,53 @@ export default function KeyboardDemoPage() {
         
         {/* Instructions */}
         <div className="space-y-2 bg-gray-100 dark:bg-gray-800 p-4 rounded-lg">
-          <h2 className="text-xl font-semibold">Keyboard Shortcuts (in Normal mode)</h2>
-          <ul className="space-y-1 text-sm">
-            <li><code className="px-1 bg-gray-200 dark:bg-gray-700 rounded">j/k</code> - Move down/up (console log)</li>
-            <li><code className="px-1 bg-gray-200 dark:bg-gray-700 rounded">gg</code> - Go to top</li>
-            <li><code className="px-1 bg-gray-200 dark:bg-gray-700 rounded">G</code> - Go to bottom</li>
-            <li><code className="px-1 bg-gray-200 dark:bg-gray-700 rounded">i</code> - Enter insert mode</li>
-            <li><code className="px-1 bg-gray-200 dark:bg-gray-700 rounded">v</code> - Enter visual mode</li>
-            <li><code className="px-1 bg-gray-200 dark:bg-gray-700 rounded">:</code> - Enter command mode</li>
-            <li><code className="px-1 bg-gray-200 dark:bg-gray-700 rounded">dd</code> - Delete (console log)</li>
-            <li><code className="px-1 bg-gray-200 dark:bg-gray-700 rounded">yy</code> - Yank/copy (console log)</li>
-            <li><code className="px-1 bg-gray-200 dark:bg-gray-700 rounded">3j</code> - Move down 3 times (with count)</li>
-            <li><code className="px-1 bg-gray-200 dark:bg-gray-700 rounded">Esc</code> - Clear command buffer / Exit mode</li>
-          </ul>
+          <h2 className="text-xl font-semibold">Keyboard Shortcuts</h2>
+          
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <h3 className="font-semibold mb-2">Navigation (Normal mode)</h3>
+              <ul className="space-y-1 text-sm">
+                <li><code className="px-1 bg-gray-200 dark:bg-gray-700 rounded">j/k</code> - Move down/up</li>
+                <li><code className="px-1 bg-gray-200 dark:bg-gray-700 rounded">gg</code> - Go to top</li>
+                <li><code className="px-1 bg-gray-200 dark:bg-gray-700 rounded">G</code> - Go to bottom</li>
+                <li><code className="px-1 bg-gray-200 dark:bg-gray-700 rounded">3j</code> - Move down 3 times</li>
+                <li><code className="px-1 bg-gray-200 dark:bg-gray-700 rounded">gt/gT</code> - Next/prev workspace</li>
+              </ul>
+              
+              <h3 className="font-semibold mb-2 mt-4">Mode Changes</h3>
+              <ul className="space-y-1 text-sm">
+                <li><code className="px-1 bg-gray-200 dark:bg-gray-700 rounded">i</code> - Insert mode</li>
+                <li><code className="px-1 bg-gray-200 dark:bg-gray-700 rounded">a</code> - Append mode</li>
+                <li><code className="px-1 bg-gray-200 dark:bg-gray-700 rounded">v</code> - Visual mode</li>
+                <li><code className="px-1 bg-gray-200 dark:bg-gray-700 rounded">:</code> - Command mode</li>
+                <li><code className="px-1 bg-gray-200 dark:bg-gray-700 rounded">/</code> - Search mode</li>
+                <li><code className="px-1 bg-gray-200 dark:bg-gray-700 rounded">Esc</code> - Return to Normal mode</li>
+              </ul>
+            </div>
+            
+            <div>
+              <h3 className="font-semibold mb-2">Stack Operations (Normal mode)</h3>
+              <ul className="space-y-1 text-sm">
+                <li><code className="px-1 bg-gray-200 dark:bg-gray-700 rounded">o</code> - Push new cell below</li>
+                <li><code className="px-1 bg-gray-200 dark:bg-gray-700 rounded">O</code> - Push new cell above</li>
+                <li><code className="px-1 bg-gray-200 dark:bg-gray-700 rounded">dd</code> - Delete cell</li>
+                <li><code className="px-1 bg-gray-200 dark:bg-gray-700 rounded">x</code> - Drop cell</li>
+                <li><code className="px-1 bg-gray-200 dark:bg-gray-700 rounded">yy</code> - Yank (copy) cell</li>
+                <li><code className="px-1 bg-gray-200 dark:bg-gray-700 rounded">p/P</code> - Paste after/before</li>
+                <li><code className="px-1 bg-gray-200 dark:bg-gray-700 rounded">cc</code> - Change cell</li>
+                <li><code className="px-1 bg-gray-200 dark:bg-gray-700 rounded">r</code> - Replace character</li>
+                <li><code className="px-1 bg-gray-200 dark:bg-gray-700 rounded">u</code> - Pop from stack</li>
+                <li><code className="px-1 bg-gray-200 dark:bg-gray-700 rounded">R</code> - Rotate stack</li>
+                <li><code className="px-1 bg-gray-200 dark:bg-gray-700 rounded">s</code> - Swap top two</li>
+              </ul>
+            </div>
+          </div>
+          
+          <div className="mt-4 text-sm text-gray-600 dark:text-gray-400">
+            <p>• In Insert/Command modes, most keys are passed through for typing</p>
+            <p>• Visual mode supports navigation (j/k) and operations (d/y)</p>
+            <p>• Number prefixes work with commands (e.g., 3dd deletes 3 cells)</p>
+          </div>
         </div>
         
         <div className="text-sm text-gray-600 dark:text-gray-400">
