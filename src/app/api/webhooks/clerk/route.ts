@@ -1,7 +1,7 @@
 import { Webhook } from 'svix'
 import { headers } from 'next/headers'
 import { WebhookEvent } from '@clerk/nextjs/server'
-import { api } from '../../../../../convex/_generated/api'
+import { api } from '@convex/_generated/api'
 import { ConvexHttpClient } from 'convex/browser'
 
 export async function POST(req: Request) {
