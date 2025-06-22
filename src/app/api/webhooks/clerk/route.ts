@@ -60,7 +60,9 @@ export async function POST(req: Request) {
 
   if (eventType === 'user.created' || eventType === 'user.updated') {
     const { email_addresses, first_name, last_name, image_url, id: clerkId } = evt.data
-    const primaryEmail = email_addresses.find((email) => email.id === evt.data.primary_email_address_id)?.email_address
+    const primaryEmail = email_addresses.find(
+      (email) => email.id === evt.data.primary_email_address_id
+    )?.email_address
 
     if (!primaryEmail) {
       return new Response('No primary email found', { status: 400 })
@@ -69,21 +71,12 @@ export async function POST(req: Request) {
     const name = [first_name, last_name].filter(Boolean).join(' ') || undefined
 
     try {
-      if (eventType === 'user.created') {
-        await convex.mutation(api.users.createUser, {
-          clerkId,
-          email: primaryEmail,
-          name,
-          imageUrl: image_url,
-        })
-      } else {
-        await convex.mutation(api.users.updateUser, {
-          clerkId,
-          email: primaryEmail,
-          name,
-          imageUrl: image_url,
-        })
-      }
+      await convex.mutation(api.users.upsertUser, {
+        clerkId,
+        email: primaryEmail,
+        name,
+        imageUrl: image_url,
+      })
     } catch (error) {
       console.error('Error syncing user to Convex:', error)
       return new Response('Error syncing user', { status: 500 })
@@ -94,7 +87,7 @@ export async function POST(req: Request) {
     if (!id) {
       return new Response('No user ID found', { status: 400 })
     }
-    
+
     try {
       await convex.mutation(api.users.deleteUser, {
         clerkId: id,

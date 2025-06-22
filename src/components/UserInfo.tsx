@@ -1,7 +1,7 @@
 'use client'
 
 import { useQuery } from 'convex/react'
-import { api } from '@/convex/_generated/api'
+import { api } from '../../convex/_generated/api'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { AlertCircle } from 'lucide-react'
@@ -66,10 +66,6 @@ export function UserInfo() {
               <dd>{user.name}</dd>
             </div>
           )}
-          <div>
-            <dt className="font-semibold text-muted-foreground">Created:</dt>
-            <dd>{new Date(user.createdAt).toLocaleString()}</dd>
-          </div>
         </dl>
       </CardContent>
     </Card>
