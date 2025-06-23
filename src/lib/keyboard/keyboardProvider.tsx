@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, useRef, useMemo, ReactNode } from 'react';
+import React, { createContext, useState, useEffect, useRef, useMemo, ReactNode } from 'react';
 import { 
   KeyboardContextValue, 
   InternalKeyboardState, 
@@ -9,7 +9,8 @@ import {
   KeyboardAction,
   Keymap,
   Command,
-  InteractionContext
+  InteractionContext,
+  GenericSemanticCommand
 } from './keyboardTypes'
 import { 
   formatKey, 
@@ -24,15 +25,7 @@ import { processKeyWithStack } from './stackReducer'
 import { defaultKeymaps } from './keyboardCommands'
 import { useFocusTracking } from './keyboardFocusTracking'
 
-const KeyboardContext = createContext<KeyboardContextValue | null>(null);
-
-export const useKeyboard = () => {
-  const context = useContext(KeyboardContext);
-  if (!context) {
-    throw new Error('useKeyboard must be used within KeyboardProvider');
-  }
-  return context;
-}
+export const KeyboardContext = createContext<KeyboardContextValue | null>(null);
 
 interface KeyboardProviderProps {
   children: ReactNode;
@@ -50,6 +43,10 @@ export const KeyboardProvider: React.FC<KeyboardProviderProps> = ({
 
   // Internal state - doesn't trigger re-renders
   const internalStateRef = useRef<InternalKeyboardState>(initialState);
+  
+  // Focus management
+  const [focusedComponent, setFocusedComponent] = useState<string | undefined>();
+  const componentHandlersRef = useRef<Map<string, (command: GenericSemanticCommand) => void>>(new Map());
 
   // Focus tracking
   const { focusContext } = useFocusTracking();
@@ -110,8 +107,18 @@ export const KeyboardProvider: React.FC<KeyboardProviderProps> = ({
           register: newState.activeRegister || '"',
         }
         const result = command(context);
+        
+        // Execute action if provided
         if (result.action) {
           result.action();
+        }
+        
+        // Dispatch semantic command to all registered handlers
+        // Each component decides whether to respond based on its own focus state
+        if (result.semanticCommand) {
+          componentHandlersRef.current.forEach((handler) => {
+            handler(result.semanticCommand as GenericSemanticCommand);
+          });
         }
         
         // If the command resulted in a mode change, update the state
@@ -180,6 +187,9 @@ export const KeyboardProvider: React.FC<KeyboardProviderProps> = ({
     visualSelection: uiState.visualSelection,
     searchPattern: uiState.searchPattern,
     
+    // Focus state
+    focusedComponent,
+    
     // Stable methods
     setMode: (mode: Mode) => {
       dispatchRef.current?.({ type: 'SET_MODE', mode });
@@ -197,7 +207,26 @@ export const KeyboardProvider: React.FC<KeyboardProviderProps> = ({
       internalStateRef.current = newState;
       setUiState(extractUIState(newState));
     },
-  }), [uiState, focusContext]);
+    
+    // Focus management API
+    registerFocusHandler: (id: string, handler: (command: GenericSemanticCommand) => void) => {
+      componentHandlersRef.current.set(id, handler);
+    },
+    unregisterFocusHandler: (id: string) => {
+      componentHandlersRef.current.delete(id);
+      if (focusedComponent === id) {
+        setFocusedComponent(undefined);
+      }
+    },
+    requestFocus: (id: string) => {
+      setFocusedComponent(id);
+    },
+    releaseFocus: (id: string) => {
+      if (focusedComponent === id) {
+        setFocusedComponent(undefined);
+      }
+    },
+  }), [uiState, focusContext, focusedComponent]);
 
   return (
     <KeyboardContext.Provider value={value}>
@@ -208,6 +237,16 @@ export const KeyboardProvider: React.FC<KeyboardProviderProps> = ({
 
 // Helper to resolve command from keymap
 const resolveKeymapCommand = (keymap: Keymap, keys: string): { command?: Command } => {
+  // Special handling for special keys like <Escape>, <Enter>, etc.
+  if (keys.startsWith('<') && keys.endsWith('>')) {
+    const command = keymap[keys];
+    if (typeof command === 'function') {
+      return { command };
+    }
+    return {};
+  }
+  
+  // For regular keys, split into parts
   const parts = keys.split('');
   let current: Keymap | Command = keymap;
   

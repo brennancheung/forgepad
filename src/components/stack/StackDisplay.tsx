@@ -5,24 +5,78 @@ import { api } from "@convex/_generated/api"
 import { Id } from "@convex/_generated/dataModel"
 import { CellDisplay } from "./CellDisplay"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { ArrowDown } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useKeyboard } from "@/lib/keyboard"
 
 interface StackDisplayProps {
   stackId: Id<"stacks">
   maxHeight?: string
+  onRequestPromptFocus?: () => void
 }
 
-export function StackDisplay({ stackId }: StackDisplayProps) {
+export function StackDisplay({ stackId, onRequestPromptFocus }: StackDisplayProps) {
   const stack = useQuery(api.stacks.get, { id: stackId })
   const cells = useQuery(api.cells.listByStack, stack ? { stackId } : "skip")
   
   const scrollAreaRef = useRef<HTMLDivElement>(null)
+  const cellRefs = useRef<Map<string, HTMLDivElement>>(new Map())
   const [isAtBottom, setIsAtBottom] = useState(true)
   const [hasNewContent, setHasNewContent] = useState(false)
+  const [selectedCellIndex, setSelectedCellIndex] = useState<number | null>(null)
   const prevCellsLength = useRef(0)
+  
+  // Use keyboard hook to handle navigation
+  const { hasFocus, requestFocus } = useKeyboard({
+    onKeyboardCommand: (command) => {
+      if (!cells || cells.length === 0) return
+      
+      switch (command.type) {
+        case 'MOVE_UP': {
+          const currentIndex = selectedCellIndex ?? cells.length
+          const newIndex = Math.max(0, currentIndex - 1)
+          setSelectedCellIndex(newIndex)
+          scrollCellIntoView(newIndex)
+          break
+        }
+        case 'MOVE_DOWN': {
+          const currentIndex = selectedCellIndex ?? -1
+          const newIndex = Math.min(cells.length - 1, currentIndex + 1)
+          setSelectedCellIndex(newIndex)
+          scrollCellIntoView(newIndex)
+          break
+        }
+        case 'EDIT': {
+          // Request focus on the prompt input
+          onRequestPromptFocus?.()
+          break
+        }
+      }
+    }
+  })
+  
+  // Request focus when cells are loaded
+  useEffect(() => {
+    if (cells && cells.length > 0 && !hasFocus) {
+      requestFocus()
+    }
+  }, [cells, hasFocus, requestFocus])
+  
+  // Scroll a specific cell into view
+  const scrollCellIntoView = useCallback((index: number) => {
+    if (!cells) return
+    const sortedCells = [...cells].sort((a, b) => a.stackPosition - b.stackPosition)
+    const cellId = sortedCells[index]?._id
+    if (!cellId) return
+    
+    const cellElement = cellRefs.current.get(cellId)
+    if (cellElement) {
+      // Scroll to the top of the cell, with some padding from the top
+      cellElement.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  }, [cells])
   
   // Check if we're at the bottom of the scroll area
   const checkIsAtBottom = () => {
@@ -117,13 +171,40 @@ export function StackDisplay({ stackId }: StackDisplayProps) {
       <ScrollArea ref={scrollAreaRef} className="w-full h-full">
         <div className="space-y-4 pr-4">
           {sortedCells.map((cell, index) => (
-            <div key={cell._id} className="relative">
+            <div 
+              key={cell._id} 
+              ref={(el) => {
+                if (el) cellRefs.current.set(cell._id, el)
+                else cellRefs.current.delete(cell._id)
+              }}
+              className={cn(
+                "relative transition-all duration-150",
+              )}
+            >
+              {/* Selection indicator bar */}
+              <div className={cn(
+                "absolute -left-1 top-0 bottom-0 w-1 rounded-full transition-all duration-150",
+                selectedCellIndex === index 
+                  ? "bg-primary" 
+                  : "bg-transparent"
+              )} />
+              
               {/* Stack position indicator */}
-              <div className="absolute -left-8 top-4 text-sm text-muted-foreground font-mono">
+              <div className={cn(
+                "absolute -left-10 top-4 text-sm font-mono transition-all duration-150",
+                selectedCellIndex === index 
+                  ? "text-primary font-bold" 
+                  : "text-muted-foreground"
+              )}>
                 {index + 1}
               </div>
               
-              <CellDisplay cell={cell} />
+              <div className={cn(
+                "transition-all duration-150 rounded-lg",
+                selectedCellIndex === index && "bg-accent/50 ring-2 ring-primary/50 shadow-md"
+              )}>
+                <CellDisplay cell={cell} />
+              </div>
             </div>
           ))}
         </div>

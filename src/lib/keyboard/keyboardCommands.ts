@@ -22,7 +22,7 @@ const moveToBottom = stackMoveToBottom
 
 const enterInsertMode: Command = () => ({
   newKeyboardState: { mode: 'insert' },
-  action: () => console.log('Enter insert mode'),
+  semanticCommand: { type: 'EDIT' }
 });
 
 const appendMode: Command = () => ({
@@ -86,11 +86,30 @@ const rotateStack = stackRotate
 
 const swapTop = stackSwap
 
+// Generic movement commands
+const moveLeft: Command = () => ({
+  semanticCommand: { type: 'MOVE_LEFT' }
+})
+
+const moveRight: Command = () => ({
+  semanticCommand: { type: 'MOVE_RIGHT' }
+})
+
+const moveUp: Command = () => ({
+  semanticCommand: { type: 'MOVE_UP' }
+})
+
+const moveDown: Command = () => ({
+  semanticCommand: { type: 'MOVE_DOWN' }
+})
+
 // Normal mode keymap
 export const normalModeKeymap: Keymap = {
   // Navigation
-  'j': moveCellDown,
-  'k': moveCellUp,
+  'h': moveLeft,             // Move left (generic - interpreted by focused component)
+  'j': moveDown,             // Move down (generic - interpreted by focused component)
+  'k': moveUp,               // Move up (generic - interpreted by focused component)
+  'l': moveRight,            // Move right (generic - interpreted by focused component)
   'g': moveToPosition,      // Handles position: 3g, 5g, etc.
   'gg': moveToBottom,        // Go to bottom (position 1)
   'G': moveToTop,            // Go to top of stack
@@ -129,7 +148,10 @@ export const normalModeKeymap: Keymap = {
 
 // Insert mode keymap (minimal - most keys handled by browser)
 export const insertModeKeymap: Keymap = {
-  '<Escape>': () => ({ newKeyboardState: { mode: 'normal' } }),
+  '<Escape>': () => ({ 
+    newKeyboardState: { mode: 'normal' },
+    semanticCommand: { type: 'CANCEL' }
+  }),
 }
 
 // Visual mode keymap

@@ -59,24 +59,34 @@ export function CellDisplay({ cell }: CellDisplayProps) {
     }
   }
 
+  const cellColors = {
+    prompt: "bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800",
+    response: {
+      pending: "bg-muted",
+      streaming: "bg-primary/10 border-primary/50",
+      complete: "bg-gray-50 dark:bg-gray-900/30 border-gray-200 dark:border-gray-800",
+      error: "bg-destructive/10 border-destructive/50",
+      cancelled: "bg-background"
+    },
+    default: {
+      pending: "bg-muted",
+      streaming: "bg-primary/10 border-primary/50",
+      complete: "bg-background",
+      error: "bg-destructive/10 border-destructive/50",
+      cancelled: "bg-background"
+    }
+  } as const
+
   const getStatusColor = () => {
-    // Special styling for prompt cells
     if (cell.type === "prompt") {
-      return "bg-secondary/50 border-secondary"
+      return cellColors.prompt
     }
     
-    switch (cell.status) {
-      case "pending":
-        return "bg-muted"
-      case "streaming":
-        return "bg-primary/10 border-primary/50"
-      case "complete":
-        return "bg-background"
-      case "error":
-        return "bg-destructive/10 border-destructive/50"
-      default:
-        return "bg-background"
+    if (cell.type === "response") {
+      return cellColors.response[cell.status] || cellColors.default.complete
     }
+    
+    return cellColors.default[cell.status] || cellColors.default.complete
   }
 
   return (

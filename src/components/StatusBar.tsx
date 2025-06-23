@@ -97,8 +97,15 @@ export function StatusBar() {
 
           {/* Active Stack*/}
           <span className="text-border">│</span>
-          <span></span>
           <span>active stack: {activeStack || ''}</span>
+          
+          {/* Focused Component */}
+          {keyboard.focusedComponent && (
+            <>
+              <span className="text-border">│</span>
+              <span>focus: {keyboard.focusedComponent}</span>
+            </>
+          )}
 
 
           <div className="ml-auto flex items-center gap-3">

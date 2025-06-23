@@ -104,6 +104,31 @@ export interface ParsedCommand {
   raw: string
 }
 
+// Generic semantic commands
+export type GenericSemanticCommand = 
+  | { type: 'MOVE_LEFT' }
+  | { type: 'MOVE_RIGHT' }
+  | { type: 'MOVE_UP' }
+  | { type: 'MOVE_DOWN' }
+  | { type: 'SELECT' }
+  | { type: 'CANCEL' }
+  | { type: 'DELETE' }
+  | { type: 'CREATE' }
+  | { type: 'EDIT' }
+
+// Hook options
+export interface UseKeyboardOptions {
+  focusOnMount?: boolean
+  onKeyboardCommand: (command: GenericSemanticCommand) => void
+}
+
+// Hook return value
+export interface UseKeyboardResult {
+  requestFocus: () => void
+  releaseFocus: () => void
+  hasFocus: boolean
+}
+
 // Context value exposed by the provider
 export interface KeyboardContextValue {
   // UI state
@@ -119,8 +144,17 @@ export interface KeyboardContextValue {
   }
   searchPattern?: string
   
+  // Focus state
+  focusedComponent?: string
+  
   // Stable methods
   setMode: (mode: Mode) => void
   executeCommand: (command: string) => void
   setStackDepth: (depth: number) => void
+  
+  // Focus management API
+  registerFocusHandler: (id: string, handler: (command: GenericSemanticCommand) => void) => void
+  unregisterFocusHandler: (id: string) => void
+  requestFocus: (id: string) => void
+  releaseFocus: (id: string) => void
 }
