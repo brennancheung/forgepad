@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Loader2, AlertCircle, CheckCircle, FileText, MessageSquare, Code, Database } from "lucide-react"
 import ReactMarkdown from "react-markdown"
+import remarkGfm from 'remark-gfm'
 import { cn } from "@/lib/utils"
 import { formatDistanceToNow } from "date-fns"
 
@@ -114,12 +115,45 @@ export function CellDisplay({ cell }: CellDisplayProps) {
         </div>
 
         {/* Content */}
-        <div className="prose prose-sm dark:prose-invert max-w-none max-h-[400px] overflow-y-auto">
+        <div className="prose prose-sm dark:prose-invert max-w-none">
           {cell.type === "prompt" || cell.type === "text" ? (
             <div className="whitespace-pre-wrap">{cell.content}</div>
           ) : cell.type === "response" ? (
             <>
-              <ReactMarkdown>{cell.content}</ReactMarkdown>
+              <ReactMarkdown 
+                remarkPlugins={[remarkGfm]}
+                components={{
+                  h1: ({ children }) => <h1 className="text-2xl font-bold mt-4 mb-2">{children}</h1>,
+                  h2: ({ children }) => <h2 className="text-xl font-semibold mt-3 mb-2">{children}</h2>,
+                  h3: ({ children }) => <h3 className="text-lg font-medium mt-2 mb-1">{children}</h3>,
+                  p: ({ children }) => <p className="mb-3">{children}</p>,
+                  ul: ({ children }) => <ul className="list-disc pl-6 mb-3">{children}</ul>,
+                  ol: ({ children }) => <ol className="list-decimal pl-6 mb-3">{children}</ol>,
+                  li: ({ children }) => <li className="mb-1">{children}</li>,
+                  code: ({ className, children }) => {
+                    const match = /language-(\w+)/.exec(className || '')
+                    return match ? (
+                      <pre className="bg-muted p-3 rounded-md overflow-x-auto mb-3">
+                        <code className={className}>{children}</code>
+                      </pre>
+                    ) : (
+                      <code className="px-1 py-0.5 bg-muted rounded text-sm">{children}</code>
+                    )
+                  },
+                  blockquote: ({ children }) => (
+                    <blockquote className="border-l-4 border-muted-foreground/30 pl-4 italic my-3">
+                      {children}
+                    </blockquote>
+                  ),
+                  a: ({ href, children }) => (
+                    <a href={href} className="text-primary underline hover:no-underline" target="_blank" rel="noopener noreferrer">
+                      {children}
+                    </a>
+                  ),
+                }}
+              >
+                {cell.content}
+              </ReactMarkdown>
               {cell.status === "streaming" && (
                 <span className="inline-block w-2 h-4 bg-foreground/50 animate-pulse ml-1" />
               )}
