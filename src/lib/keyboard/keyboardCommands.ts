@@ -1,21 +1,24 @@
 import { Command, Keymap } from './keyboardTypes'
+import {
+  stackMoveDown,
+  stackMoveUp,
+  stackMoveToPosition,
+  stackMoveToTop,
+  stackMoveToBottom,
+  stackEnterVisual,
+  stackDelete,
+  stackYank,
+  stackPaste,
+  stackSwap,
+  stackRotate
+} from './stackCommandDefinitions'
 
-// Placeholder stack commands - will be replaced with actual implementations
-const moveCellDown: Command = (context) => ({
-  action: () => console.log(`Move down ${context.count} cells`),
-});
-
-const moveCellUp: Command = (context) => ({
-  action: () => console.log(`Move up ${context.count} cells`),
-});
-
-const moveToTop: Command = () => ({
-  action: () => console.log('Move to top'),
-});
-
-const moveToBottom: Command = () => ({
-  action: () => console.log('Move to bottom'),
-});
+// Re-export stack navigation commands
+const moveCellDown = stackMoveDown
+const moveCellUp = stackMoveUp
+const moveToPosition = stackMoveToPosition
+const moveToTop = stackMoveToTop
+const moveToBottom = stackMoveToBottom
 
 const enterInsertMode: Command = () => ({
   newKeyboardState: { mode: 'insert' },
@@ -32,30 +35,17 @@ const enterCommandMode: Command = () => ({
   action: () => console.log('Enter command mode'),
 });
 
-const enterVisualMode: Command = () => ({
-  newKeyboardState: { mode: 'visual' },
-  action: () => console.log('Enter visual mode'),
-});
+const enterVisualMode = stackEnterVisual
 
 const enterSearchMode: Command = () => ({
   action: () => console.log('Enter search mode'),
 });
 
-const deleteCell: Command = (context) => ({
-  action: () => console.log(`Delete ${context.count} cells`),
-});
+const deleteCell = stackDelete
+const yankCell = stackYank
 
-const yankCell: Command = (context) => ({
-  action: () => console.log(`Yank ${context.count} cells to register ${context.register}`),
-});
-
-const pasteAfter: Command = (context) => ({
-  action: () => console.log(`Paste from register ${context.register}`),
-});
-
-const pasteBefore: Command = (context) => ({
-  action: () => console.log(`Paste before from register ${context.register}`),
-});
+const pasteAfter = stackPaste
+const pasteBefore = stackPaste  // TODO: Add before/after distinction
 
 const pushCellBelow: Command = () => ({
   newKeyboardState: { mode: 'insert' },
@@ -67,11 +57,11 @@ const pushCellAbove: Command = () => ({
   action: () => console.log('Push new cell above'),
 });
 
-const nextWorkspace: Command = () => ({
+const _nextWorkspace: Command = () => ({
   action: () => console.log('Next workspace'),
 });
 
-const previousWorkspace: Command = () => ({
+const _previousWorkspace: Command = () => ({
   action: () => console.log('Previous workspace'),
 });
 
@@ -92,25 +82,18 @@ const popStack: Command = () => ({
   action: () => console.log('Pop from stack'),
 });
 
-const rotateStack: Command = () => ({
-  action: () => console.log('Rotate stack'),
-});
+const rotateStack = stackRotate
 
-const swapTop: Command = () => ({
-  action: () => console.log('Swap top two cells'),
-});
+const swapTop = stackSwap
 
 // Normal mode keymap
 export const normalModeKeymap: Keymap = {
   // Navigation
   'j': moveCellDown,
   'k': moveCellUp,
-  'g': {
-    'g': moveToTop,
-    't': nextWorkspace,
-    'T': previousWorkspace,
-  },
-  'G': moveToBottom,
+  'g': moveToPosition,      // Handles position: 3g, 5g, etc.
+  'gg': moveToBottom,        // Go to bottom (position 1)
+  'G': moveToTop,            // Go to top of stack
   
   // Stack operations
   'o': pushCellBelow,
@@ -151,11 +134,20 @@ export const insertModeKeymap: Keymap = {
 
 // Visual mode keymap
 export const visualModeKeymap: Keymap = {
-  '<Escape>': () => ({ newKeyboardState: { mode: 'normal' } }),
-  'j': moveCellDown,
-  'k': moveCellUp,
-  'd': deleteCell,
-  'y': yankCell,
+  '<Escape>': () => ({ 
+    newKeyboardState: { 
+      mode: 'normal',
+      visualSelection: undefined 
+    } 
+  }),
+  'j': moveCellDown,    // Extends selection down
+  'k': moveCellUp,      // Extends selection up
+  'G': moveToTop,       // Extend to top
+  'gg': moveToBottom,   // Extend to bottom
+  'g': moveToPosition,  // Extend to position
+  'd': deleteCell,      // Delete selection
+  'y': yankCell,        // Yank selection
+  'x': deleteCell,      // Delete selection
 }
 
 // Command mode keymap (handled differently - these are ex commands)

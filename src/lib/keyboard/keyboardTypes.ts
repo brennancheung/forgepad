@@ -27,6 +27,15 @@ export interface InternalKeyboardState {
   activeRegister: string | null
   lastCommand: string | null
   lastCommandTime?: number
+  // Stack-specific state
+  stackPosition: number
+  stackDepth: number
+  visualSelection?: {
+    start: number
+    end: number
+  }
+  // Register system
+  registers: Map<string, unknown[]>
 }
 
 // UI state - only what components need to render
@@ -34,6 +43,13 @@ export interface UIKeyboardState {
   mode: Mode
   commandBuffer: string
   isRecordingCommand: boolean
+  // Stack UI state
+  stackPosition: number
+  stackDepth: number
+  visualSelection?: {
+    start: number
+    end: number
+  }
 }
 
 // Command context for executing commands
@@ -41,6 +57,7 @@ export interface CommandContext {
   state: InternalKeyboardState
   count: number
   register: string
+  stackCommand?: unknown  // Parsed stack command if available
 }
 
 // Result of executing a command
@@ -48,6 +65,7 @@ export interface CommandResult {
   newKeyboardState?: Partial<InternalKeyboardState>
   action?: () => void
   preventDefault?: boolean
+  semanticCommand?: unknown  // For commands that need app-level handling
 }
 
 // Command function type
@@ -82,8 +100,15 @@ export interface KeyboardContextValue {
   commandBuffer: string
   isRecordingCommand: boolean
   interactionContext: InteractionContext
+  stackPosition: number
+  stackDepth: number
+  visualSelection?: {
+    start: number
+    end: number
+  }
   
   // Stable methods
   setMode: (mode: Mode) => void
   executeCommand: (command: string) => void
+  setStackDepth: (depth: number) => void
 }

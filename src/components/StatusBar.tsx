@@ -5,10 +5,12 @@ import { api } from '@convex/_generated/api'
 import { usePathname } from 'next/navigation'
 import { Id } from '@convex/_generated/dataModel'
 import { formatDistanceToNow } from 'date-fns'
+import { useKeyboard } from '@/lib/keyboard'
 
 export function StatusBar() {
   const pathname = usePathname()
   const workspaceId = pathname.match(/\/workspace\/([^/]+)/)?.[1] as Id<'workspaces'> | undefined
+  const keyboard = useKeyboard()
 
   const workspace = useQuery(api.workspaces.get, workspaceId ? { id: workspaceId } : 'skip')
 
@@ -33,7 +35,31 @@ export function StatusBar() {
 
           {/* Current Mode (similar to vim) */}
           <span className="text-border">│</span>
-          <span>NORMAL</span>
+          <span className={keyboard.mode === 'visual' ? 'text-yellow-500' : ''}>
+            {keyboard.mode.toUpperCase()}
+          </span>
+
+          {/* Stack Position */}
+          {keyboard.stackDepth > 0 && (
+            <>
+              <span className="text-border">│</span>
+              <span>
+                {keyboard.visualSelection ? (
+                  `${Math.min(keyboard.visualSelection.start, keyboard.visualSelection.end)}-${Math.max(keyboard.visualSelection.start, keyboard.visualSelection.end)}/${keyboard.stackDepth}`
+                ) : (
+                  `${keyboard.stackPosition}/${keyboard.stackDepth}`
+                )}
+              </span>
+            </>
+          )}
+
+          {/* Command Buffer */}
+          {keyboard.commandBuffer && (
+            <>
+              <span className="text-border">│</span>
+              <span className="text-yellow-500">{keyboard.commandBuffer}</span>
+            </>
+          )}
 
           {/* Active Stack*/}
           <span className="text-border">│</span>

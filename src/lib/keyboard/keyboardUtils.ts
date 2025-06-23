@@ -144,6 +144,9 @@ export const extractUIState = (internal: InternalKeyboardState) => ({
   mode: internal.mode,
   commandBuffer: internal.commandBuffer,
   isRecordingCommand: internal.commandBuffer.length > 0,
+  stackPosition: internal.stackPosition,
+  stackDepth: internal.stackDepth,
+  visualSelection: internal.visualSelection,
 });
 
 // Check if UI state needs updating
@@ -153,6 +156,10 @@ export const shouldUpdateUI = (
 ): boolean => {
   return (
     oldState.mode !== newState.mode ||
-    oldState.commandBuffer !== newState.commandBuffer
+    oldState.commandBuffer !== newState.commandBuffer ||
+    oldState.stackPosition !== newState.stackPosition ||
+    oldState.stackDepth !== newState.stackDepth ||
+    oldState.visualSelection?.start !== newState.visualSelection?.start ||
+    oldState.visualSelection?.end !== newState.visualSelection?.end
   );
 }

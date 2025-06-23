@@ -7,6 +7,12 @@ const initialState: InternalKeyboardState = {
   pendingCount: null,
   activeRegister: null,
   lastCommand: null,
+  // Stack state
+  stackPosition: 1,
+  stackDepth: 0,
+  visualSelection: undefined,
+  // Register system
+  registers: new Map(),
 }
 
 // Resolve a key sequence in the keymap

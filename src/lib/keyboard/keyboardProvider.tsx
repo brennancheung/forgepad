@@ -19,7 +19,8 @@ import {
   shouldUpdateUI,
   parseCommand
 } from './keyboardUtils'
-import { keyboardReducer, processKeyWithKeymap, initialState } from './keyboardReducer'
+import { keyboardReducer, initialState } from './keyboardReducer'
+import { processKeyWithStack } from './stackReducer'
 import { defaultKeymaps } from './keyboardCommands'
 import { useFocusTracking } from './keyboardFocusTracking'
 
@@ -89,7 +90,7 @@ export const KeyboardProvider: React.FC<KeyboardProviderProps> = ({
     if (!currentKeymap) return;
     
     const oldLastCommand = currentState.lastCommand;
-    const newState = processKeyWithKeymap(currentState, key, currentKeymap);
+    const newState = processKeyWithStack(currentState, key, currentKeymap);
     
     // Update internal state
     internalStateRef.current = newState;
@@ -174,6 +175,9 @@ export const KeyboardProvider: React.FC<KeyboardProviderProps> = ({
     commandBuffer: uiState.commandBuffer,
     isRecordingCommand: uiState.isRecordingCommand,
     interactionContext: focusContext,
+    stackPosition: uiState.stackPosition,
+    stackDepth: uiState.stackDepth,
+    visualSelection: uiState.visualSelection,
     
     // Stable methods
     setMode: (mode: Mode) => {
@@ -181,6 +185,16 @@ export const KeyboardProvider: React.FC<KeyboardProviderProps> = ({
     },
     executeCommand: (command: string) => {
       dispatchRef.current?.({ type: 'EXECUTE_COMMAND', command });
+    },
+    setStackDepth: (depth: number) => {
+      const currentState = internalStateRef.current;
+      const newState = {
+        ...currentState,
+        stackDepth: depth,
+        stackPosition: Math.min(currentState.stackPosition, depth)
+      };
+      internalStateRef.current = newState;
+      setUiState(extractUIState(newState));
     },
   }), [uiState, focusContext]);
 

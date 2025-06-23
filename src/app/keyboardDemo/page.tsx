@@ -1,46 +1,100 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useKeyboard } from '@/lib/keyboard'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 
 export default function KeyboardDemoPage() {
-  const { mode, setMode } = useKeyboard()
+  const keyboard = useKeyboard()
   const [cellContent, setCellContent] = useState('')
   const [commandInput, setCommandInput] = useState('')
+  
+  // Demo stack items
+  const demoStack = [
+    { id: '1', content: 'Bottom of stack', type: 'text' },
+    { id: '2', content: '42', type: 'number' },
+    { id: '3', content: '[1, 2, 3]', type: 'array' },
+    { id: '4', content: 'Hello World', type: 'text' },
+    { id: '5', content: 'Top of stack', type: 'text' },
+  ]
+  
+  // Set stack depth for demo
+  useEffect(() => {
+    keyboard.setStackDepth(demoStack.length)
+  }, [keyboard, demoStack.length])
   
   return (
     <div className="container mx-auto p-8 pb-16">
       <h1 className="text-3xl font-bold mb-8">Keyboard Manager Demo</h1>
       
       <div className="space-y-8">
+        {/* Stack visualization */}
+        <div className="space-y-2">
+          <h2 className="text-xl font-semibold">Stack Visualization</h2>
+          <div className="space-y-1 font-mono">
+            {demoStack.map((item, index) => {
+              const position = demoStack.length - index
+              const isCurrentPosition = position === keyboard.stackPosition
+              const isInSelection = keyboard.visualSelection && 
+                position >= Math.min(keyboard.visualSelection.start, keyboard.visualSelection.end) &&
+                position <= Math.max(keyboard.visualSelection.start, keyboard.visualSelection.end)
+              
+              return (
+                <div 
+                  key={item.id}
+                  className={`
+                    flex items-center gap-4 p-2 rounded
+                    ${isCurrentPosition ? 'bg-blue-100 dark:bg-blue-900' : ''}
+                    ${isInSelection ? 'bg-yellow-100 dark:bg-yellow-900' : ''}
+                    ${isCurrentPosition && isInSelection ? 'bg-green-100 dark:bg-green-900' : ''}
+                  `}
+                >
+                  <span className="text-gray-500 w-8 text-right">{position}</span>
+                  <span className="flex-1">{item.content}</span>
+                  <span className="text-gray-500 text-sm">{item.type}</span>
+                </div>
+              )
+            })}
+          </div>
+          <div className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
+            <div>
+              Position: {keyboard.stackPosition}/{keyboard.stackDepth} | 
+              Mode: {keyboard.mode} | 
+              {keyboard.visualSelection && ` Selection: ${Math.min(keyboard.visualSelection.start, keyboard.visualSelection.end)}-${Math.max(keyboard.visualSelection.start, keyboard.visualSelection.end)}`}
+            </div>
+            <div className="text-xs">
+              Try: j/k to move | 3d to delete 3 | yy to yank | p to paste | v for visual mode | s to swap | r to rotate
+            </div>
+          </div>
+        </div>
+
         {/* Mode switching buttons */}
         <div className="space-y-2">
           <h2 className="text-xl font-semibold">Manual Mode Switching</h2>
           <div className="flex gap-2">
             <Button 
-              onClick={() => setMode('normal')}
-              variant={mode === 'normal' ? 'default' : 'outline'}
+              onClick={() => keyboard.setMode('normal')}
+              variant={keyboard.mode === 'normal' ? 'default' : 'outline'}
             >
               Normal Mode
             </Button>
             <Button 
-              onClick={() => setMode('insert')}
-              variant={mode === 'insert' ? 'default' : 'outline'}
+              onClick={() => keyboard.setMode('insert')}
+              variant={keyboard.mode === 'insert' ? 'default' : 'outline'}
             >
               Insert Mode
             </Button>
             <Button 
-              onClick={() => setMode('visual')}
-              variant={mode === 'visual' ? 'default' : 'outline'}
+              onClick={() => keyboard.setMode('visual')}
+              variant={keyboard.mode === 'visual' ? 'default' : 'outline'}
             >
               Visual Mode
             </Button>
             <Button 
-              onClick={() => setMode('command')}
-              variant={mode === 'command' ? 'default' : 'outline'}
+              onClick={() => keyboard.setMode('command')}
+              variant={keyboard.mode === 'command' ? 'default' : 'outline'}
             >
               Command Mode
             </Button>
@@ -86,13 +140,14 @@ export default function KeyboardDemoPage() {
           
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <h3 className="font-semibold mb-2">Navigation (Normal mode)</h3>
+              <h3 className="font-semibold mb-2">Stack Navigation (Normal mode)</h3>
               <ul className="space-y-1 text-sm">
-                <li><code className="px-1 bg-gray-200 dark:bg-gray-700 rounded">j/k</code> - Move down/up</li>
-                <li><code className="px-1 bg-gray-200 dark:bg-gray-700 rounded">gg</code> - Go to top</li>
-                <li><code className="px-1 bg-gray-200 dark:bg-gray-700 rounded">G</code> - Go to bottom</li>
-                <li><code className="px-1 bg-gray-200 dark:bg-gray-700 rounded">3j</code> - Move down 3 times</li>
-                <li><code className="px-1 bg-gray-200 dark:bg-gray-700 rounded">gt/gT</code> - Next/prev workspace</li>
+                <li><code className="px-1 bg-gray-200 dark:bg-gray-700 rounded">j/k</code> - Move down/up in stack</li>
+                <li><code className="px-1 bg-gray-200 dark:bg-gray-700 rounded">3j/3k</code> - Move 3 positions</li>
+                <li><code className="px-1 bg-gray-200 dark:bg-gray-700 rounded">gg</code> - Go to bottom (position 1)</li>
+                <li><code className="px-1 bg-gray-200 dark:bg-gray-700 rounded">G</code> - Go to top of stack</li>
+                <li><code className="px-1 bg-gray-200 dark:bg-gray-700 rounded">5g</code> - Go to position 5</li>
+                <li><code className="px-1 bg-gray-200 dark:bg-gray-700 rounded">@name</code> - Go to named cell</li>
               </ul>
               
               <h3 className="font-semibold mb-2 mt-4">Mode Changes</h3>

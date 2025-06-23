@@ -3,9 +3,14 @@
 import { ConvexHttpClient } from "convex/browser"
 import { api } from "@convex/_generated/api"
 import { streamText, generateObject } from "ai"
-import { openai } from "@ai-sdk/openai"
+import { createOpenAI } from "@ai-sdk/openai"
 import { z } from "zod"
 import { Id } from "@convex/_generated/dataModel"
+
+// Create OpenAI provider with explicit API key
+const openai = createOpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+})
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!)
 
@@ -280,3 +285,4 @@ export async function performStackOperation({
       throw new Error(`Unknown operation: ${operation}`)
   }
 }
+

@@ -34,6 +34,9 @@ export default function Home() {
           <Button size="lg" variant="outline" asChild>
             <Link href="/sign-in">Sign In</Link>
           </Button>
+          <Button size="lg" variant="secondary" asChild>
+            <Link href="/demo/chat">Try Chat Demo</Link>
+          </Button>
         </div>
       </section>
 
