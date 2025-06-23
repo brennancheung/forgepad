@@ -23,7 +23,7 @@ import {
 import { keyboardReducer, initialState } from './keyboardReducer'
 import { processKeyWithStack } from './stackReducer'
 import { defaultKeymaps } from './keyboardCommands'
-import { useFocusTracking } from './keyboardFocusTracking'
+// import { useFocusTracking } from './keyboardFocusTracking'
 
 export const KeyboardContext = createContext<KeyboardContextValue | null>(null);
 
@@ -36,6 +36,7 @@ export const KeyboardProvider: React.FC<KeyboardProviderProps> = ({
   children,
   keymaps = defaultKeymaps 
 }) => {
+  console.log('KeyboardProvider render')
   // UI state - only what components need to render
   const [uiState, setUiState] = useState<UIKeyboardState>(() => 
     extractUIState(initialState)
@@ -48,10 +49,10 @@ export const KeyboardProvider: React.FC<KeyboardProviderProps> = ({
   const [focusedComponent, setFocusedComponent] = useState<string | undefined>();
   const componentHandlersRef = useRef<Map<string, (command: GenericSemanticCommand) => void>>(new Map());
 
-  // Focus tracking
-  const { focusContext } = useFocusTracking();
-  const focusContextRef = useRef(focusContext);
-  focusContextRef.current = focusContext;
+  // Focus tracking - removed to improve performance
+  // const { focusContext } = useFocusTracking();
+  // const focusContextRef = useRef(focusContext);
+  // focusContextRef.current = focusContext;
   
   // Cache for interaction context to avoid repeated DOM traversal
   const contextCacheRef = useRef<{
@@ -137,15 +138,22 @@ export const KeyboardProvider: React.FC<KeyboardProviderProps> = ({
     }
   }
 
-  // Clear context cache on focus changes
-  useEffect(() => {
-    // Reset cache when focus context changes
-    contextCacheRef.current = { element: null, context: 'stack-navigation' };
-  }, [focusContext]);
+  // Clear context cache on focus changes - removed since we're not tracking focus
+  // useEffect(() => {
+  //   // Reset cache when focus context changes
+  //   contextCacheRef.current = { element: null, context: 'stack-navigation' };
+  // }, [focusContext]);
   
   // Register handler ONCE
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
+      const currentState = internalStateRef.current;
+      
+      // Fast path for insert mode - only handle Escape
+      if (currentState.mode === 'insert' && event.key !== 'Escape') {
+        return;
+      }
+      
       // Use cached context if the target element hasn't changed
       let context: InteractionContext;
       if (contextCacheRef.current.element === event.target) {
@@ -158,8 +166,6 @@ export const KeyboardProvider: React.FC<KeyboardProviderProps> = ({
           context: context
         };
       }
-      
-      const currentState = internalStateRef.current;
       
       if (!shouldHandleKey(event, context, currentState)) {
         return;
@@ -179,9 +185,9 @@ export const KeyboardProvider: React.FC<KeyboardProviderProps> = ({
   const value = useMemo(() => ({
     // UI state
     mode: uiState.mode,
-    commandBuffer: uiState.commandBuffer,
-    isRecordingCommand: uiState.isRecordingCommand,
-    interactionContext: focusContext,
+    commandBuffer: internalStateRef.current.commandBuffer, // Read directly from internal state
+    isRecordingCommand: internalStateRef.current.commandBuffer.length > 0, // Calculate from internal state
+    interactionContext: 'stack-navigation' as InteractionContext, // TODO: Remove this field entirely
     stackPosition: uiState.stackPosition,
     stackDepth: uiState.stackDepth,
     visualSelection: uiState.visualSelection,
@@ -226,7 +232,7 @@ export const KeyboardProvider: React.FC<KeyboardProviderProps> = ({
         setFocusedComponent(undefined);
       }
     },
-  }), [uiState, focusContext, focusedComponent]);
+  }), [uiState, focusedComponent]);
 
   return (
     <KeyboardContext.Provider value={value}>

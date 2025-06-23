@@ -35,30 +35,47 @@ export const isInputElement = (element: HTMLElement): boolean => {
   );
 }
 
+// Cache for interaction contexts to avoid repeated DOM traversal
+const contextCache = new WeakMap<HTMLElement, InteractionContext>();
+
 // Get the interaction context from a keyboard event
 export const getInteractionContext = (event: KeyboardEvent): InteractionContext => {
   const target = event.target as HTMLElement;
   
-  // Priority order (highest to lowest)
-  const contexts: Array<{ selector: string; context: InteractionContext }> = [
-    { selector: '[role="dialog"]', context: 'modal-dialog' },
-    { selector: '[data-role="command-input"]', context: 'command-input' },
-    { selector: '[data-role="search-input"]', context: 'search-input' },
-    { selector: '[data-role="widget-input"]', context: 'widget-interaction' },
-    { selector: '[data-role="cell-editor"]', context: 'cell-editing' },
-  ];
+  // Check cache first
+  const cached = contextCache.get(target);
+  if (cached) return cached;
   
-  for (const { selector, context } of contexts) {
-    if (target.closest(selector)) return context;
+  let context: InteractionContext = 'stack-navigation';
+  
+  // Fast path: check data attributes directly on the target element
+  const role = target.dataset.role || target.getAttribute('role');
+  
+  if (role === 'dialog') {
+    context = 'modal-dialog';
+  } else if (role === 'command-input') {
+    context = 'command-input';
+  } else if (role === 'search-input') {
+    context = 'search-input';
+  } else if (role === 'widget-input') {
+    context = 'widget-interaction';
+  } else if (role === 'cell-editor') {
+    context = 'cell-editing';
+  } else if (isInputElement(target)) {
+    // Only do DOM traversal for inputs without explicit context
+    // Use a single closest() call with multiple selectors
+    const contextElement = target.closest('[data-cell-id], [role="dialog"], [data-role]');
+    if (contextElement) {
+      if (contextElement.hasAttribute('data-cell-id')) {
+        context = 'cell-editing';
+      }
+    }
   }
   
-  // Check for general inputs
-  if (isInputElement(target)) {
-    const closestCell = target.closest('[data-cell-id]');
-    if (closestCell) return 'cell-editing';
-  }
+  // Cache the result
+  contextCache.set(target, context);
   
-  return 'stack-navigation';
+  return context;
 }
 
 // Determine if a key should be handled based on context
@@ -161,7 +178,8 @@ export const shouldUpdateUI = (
 ): boolean => {
   return (
     oldState.mode !== newState.mode ||
-    oldState.commandBuffer !== newState.commandBuffer ||
+    // Removed commandBuffer check - it changes too frequently and only StatusBar uses it
+    // oldState.commandBuffer !== newState.commandBuffer ||
     oldState.stackPosition !== newState.stackPosition ||
     oldState.stackDepth !== newState.stackDepth ||
     oldState.visualSelection?.start !== newState.visualSelection?.start ||

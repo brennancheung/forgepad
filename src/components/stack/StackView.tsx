@@ -103,7 +103,11 @@ export function StackView({ stackId, stackName, cellCount }: StackViewProps) {
           <Textarea
             ref={textareaRef}
             value={input}
-            onChange={(e) => setInput(e.target.value)}
+            onChange={(e) => {
+              setInput(e.target.value)
+              e.preventDefault()
+              e.stopPropagation()
+            }}
             placeholder="Enter a prompt to generate AI response..."
             className="min-h-[100px] resize-none"
             onFocus={() => {
@@ -117,7 +121,7 @@ export function StackView({ stackId, stackName, cellCount }: StackViewProps) {
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault()
-                handleSubmit(e as React.FormEvent)
+                // handleSubmit(e as React.FormEvent)
               }
             }}
           />
