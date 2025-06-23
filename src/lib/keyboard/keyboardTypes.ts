@@ -1,6 +1,6 @@
 // Core types for the keyboard management system
 
-export type Mode = 'normal' | 'insert' | 'command' | 'visual'
+export type Mode = 'normal' | 'insert' | 'command' | 'visual' | 'search'
 
 export type InteractionContext = 
   | 'stack-navigation'    // User navigating the stack
@@ -36,6 +36,15 @@ export interface InternalKeyboardState {
   }
   // Register system
   registers: Map<string, unknown[]>
+  // Search state
+  searchPattern?: string
+  searchDirection?: 'forward' | 'backward'
+  // Last change for dot repeat
+  lastChange?: {
+    command: string
+    count?: number
+    register?: string
+  }
 }
 
 // UI state - only what components need to render
@@ -50,6 +59,8 @@ export interface UIKeyboardState {
     start: number
     end: number
   }
+  // Search state
+  searchPattern?: string
 }
 
 // Command context for executing commands
@@ -106,6 +117,7 @@ export interface KeyboardContextValue {
     start: number
     end: number
   }
+  searchPattern?: string
   
   // Stable methods
   setMode: (mode: Mode) => void

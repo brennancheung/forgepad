@@ -53,13 +53,18 @@ export function StatusBar() {
             </>
           )}
 
-          {/* Command Buffer */}
-          {keyboard.commandBuffer && (
+          {/* Command Buffer or Search Pattern */}
+          {keyboard.mode === 'search' && keyboard.searchPattern !== undefined ? (
+            <>
+              <span className="text-border">│</span>
+              <span className="text-yellow-500">/{keyboard.searchPattern}</span>
+            </>
+          ) : keyboard.commandBuffer ? (
             <>
               <span className="text-border">│</span>
               <span className="text-yellow-500">{keyboard.commandBuffer}</span>
             </>
-          )}
+          ) : null}
 
           {/* Active Stack*/}
           <span className="text-border">│</span>

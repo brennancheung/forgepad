@@ -18,7 +18,7 @@ interface WorkspaceListProps {
 }
 
 export function WorkspaceList({ workspaces, activeWorkspaceId, onWorkspaceSelect }: WorkspaceListProps) {
-  const createWorkspace = useMutation(api.workspaces.createWorkspace)
+  const createWorkspace = useMutation(api.workspaces.create)
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
 
   const handleCreateWorkspace = async (name?: string) => {

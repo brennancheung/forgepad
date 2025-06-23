@@ -178,6 +178,7 @@ export const KeyboardProvider: React.FC<KeyboardProviderProps> = ({
     stackPosition: uiState.stackPosition,
     stackDepth: uiState.stackDepth,
     visualSelection: uiState.visualSelection,
+    searchPattern: uiState.searchPattern,
     
     // Stable methods
     setMode: (mode: Mode) => {

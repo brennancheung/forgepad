@@ -47,7 +47,31 @@ export const get = query({
   },
 })
 
-export const createWorkspace = mutation({
+export const getByName = query({
+  args: { name: v.string() },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity()
+    if (!identity) return null
+
+    const user = await ctx.db
+      .query('users')
+      .withIndex('by_clerk_id', (q) => q.eq('clerkId', identity.subject))
+      .unique()
+    
+    if (!user) return null
+
+    const workspace = await ctx.db
+      .query('workspaces')
+      .withIndex('by_user_and_name', (q) => 
+        q.eq('userId', user._id).eq('name', args.name)
+      )
+      .unique()
+
+    return workspace
+  },
+})
+
+export const create = mutation({
   args: {
     name: v.optional(v.string()),
   },

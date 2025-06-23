@@ -17,7 +17,7 @@ interface WorkspaceSidebarProps {
 
 export function WorkspaceSidebar({ activeWorkspaceId, onWorkspaceSelect }: WorkspaceSidebarProps) {
   const workspaces = useQuery(api.workspaces.listWorkspaces)
-  const createWorkspace = useMutation(api.workspaces.createWorkspace)
+  const createWorkspace = useMutation(api.workspaces.create)
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
 
   const handleCreateWorkspace = async (name?: string) => {

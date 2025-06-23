@@ -12,6 +12,16 @@ import {
   deleteToPosition,
   yankToPosition
 } from './stackOperations'
+import {
+  startSearch,
+  navigateMatch
+} from './searchTransformations'
+import {
+  executeDotRepeat
+} from './repeatTransformations'
+import {
+  triggerWorkspaceList
+} from './workspaceTransformations'
 
 /**
  * Stack command definitions that return pure state transformations.
@@ -188,6 +198,71 @@ export const stackYankToPosition: Command = (context): CommandResult => {
   }
 }
 
+// Search commands
+export const stackStartSearchForward: Command = (context): CommandResult => {
+  const newState = startSearch(context.state, 'forward')
+  
+  return {
+    newKeyboardState: {
+      mode: newState.mode,
+      searchPattern: newState.searchPattern,
+      searchDirection: newState.searchDirection,
+      commandBuffer: newState.commandBuffer
+    }
+  }
+}
+
+export const stackStartSearchBackward: Command = (context): CommandResult => {
+  const newState = startSearch(context.state, 'backward')
+  
+  return {
+    newKeyboardState: {
+      mode: newState.mode,
+      searchPattern: newState.searchPattern,
+      searchDirection: newState.searchDirection,
+      commandBuffer: newState.commandBuffer
+    }
+  }
+}
+
+export const stackNextMatch: Command = (context): CommandResult => {
+  const { state: newState, command } = navigateMatch(context.state, false)
+  
+  return {
+    newKeyboardState: newState === context.state ? undefined : newState,
+    semanticCommand: command
+  }
+}
+
+export const stackPrevMatch: Command = (context): CommandResult => {
+  const { state: newState, command } = navigateMatch(context.state, true)
+  
+  return {
+    newKeyboardState: newState === context.state ? undefined : newState,
+    semanticCommand: command
+  }
+}
+
+// Dot repeat command
+export const stackDotRepeat: Command = (context): CommandResult => {
+  const { state: newState, command } = executeDotRepeat(context.state)
+  
+  return {
+    newKeyboardState: newState === context.state ? undefined : newState,
+    semanticCommand: command
+  }
+}
+
+// Workspace commands
+export const stackListWorkspaces: Command = (context): CommandResult => {
+  const { state: newState, command } = triggerWorkspaceList(context.state)
+  
+  return {
+    newKeyboardState: newState === context.state ? undefined : newState,
+    semanticCommand: command
+  }
+}
+
 // Helper to create a command from a parsed stack command
 export const createStackCommand = (
   operator: string,
@@ -210,6 +285,11 @@ export const createStackCommand = (
     case 'dg': return stackDeleteToPosition
     case 'yg': return stackYankToPosition
     case 'xg': return stackDeleteToPosition
+    case '/': return stackStartSearchForward
+    case '?': return stackStartSearchBackward
+    case 'n': return stackNextMatch
+    case 'N': return stackPrevMatch
+    case '.': return stackDotRepeat
     default: return null
   }
 }

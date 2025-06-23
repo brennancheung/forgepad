@@ -69,6 +69,11 @@ export const parseStackCommand = (buffer: string): ParsedStackCommand | null => 
       'r': { type: 'special', value: 'rotate' },
       'j': { type: 'count', value: 1 },
       'k': { type: 'count', value: -1 },
+      '/': { type: 'special', value: 'search-forward' },
+      '?': { type: 'special', value: 'search-backward' },
+      'n': { type: 'special', value: 'next-match' },
+      'N': { type: 'special', value: 'prev-match' },
+      '.': { type: 'special', value: 'dot-repeat' },
     }
     
     const operand = singleCharCommands[buffer]

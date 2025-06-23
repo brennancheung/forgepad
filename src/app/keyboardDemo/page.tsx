@@ -156,7 +156,8 @@ export default function KeyboardDemoPage() {
                 <li><code className="px-1 bg-gray-200 dark:bg-gray-700 rounded">a</code> - Append mode</li>
                 <li><code className="px-1 bg-gray-200 dark:bg-gray-700 rounded">v</code> - Visual mode</li>
                 <li><code className="px-1 bg-gray-200 dark:bg-gray-700 rounded">:</code> - Command mode</li>
-                <li><code className="px-1 bg-gray-200 dark:bg-gray-700 rounded">/</code> - Search mode</li>
+                <li><code className="px-1 bg-gray-200 dark:bg-gray-700 rounded">/</code> - Search forward</li>
+                <li><code className="px-1 bg-gray-200 dark:bg-gray-700 rounded">?</code> - Search backward</li>
                 <li><code className="px-1 bg-gray-200 dark:bg-gray-700 rounded">Esc</code> - Return to Normal mode</li>
               </ul>
             </div>
@@ -175,6 +176,13 @@ export default function KeyboardDemoPage() {
                 <li><code className="px-1 bg-gray-200 dark:bg-gray-700 rounded">u</code> - Pop from stack</li>
                 <li><code className="px-1 bg-gray-200 dark:bg-gray-700 rounded">R</code> - Rotate stack</li>
                 <li><code className="px-1 bg-gray-200 dark:bg-gray-700 rounded">s</code> - Swap top two</li>
+                <li><code className="px-1 bg-gray-200 dark:bg-gray-700 rounded">.</code> - Repeat last change</li>
+              </ul>
+              
+              <h3 className="font-semibold mb-2 mt-4">Search & Navigation</h3>
+              <ul className="space-y-1 text-sm">
+                <li><code className="px-1 bg-gray-200 dark:bg-gray-700 rounded">n</code> - Next search match</li>
+                <li><code className="px-1 bg-gray-200 dark:bg-gray-700 rounded">N</code> - Previous search match</li>
               </ul>
             </div>
           </div>
@@ -183,6 +191,8 @@ export default function KeyboardDemoPage() {
             <p>• In Insert/Command modes, most keys are passed through for typing</p>
             <p>• Visual mode supports navigation (j/k) and operations (d/y)</p>
             <p>• Number prefixes work with commands (e.g., 3dd deletes 3 cells)</p>
+            <p>• Search mode: type pattern, Enter to search, Esc to cancel</p>
+            <p>• Dot repeat (.) replays the last change command</p>
           </div>
         </div>
         

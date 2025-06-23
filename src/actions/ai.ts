@@ -55,31 +55,47 @@ export async function generateWithAI({
       prompt,
     })
 
-    // Process stream with intelligent batching
+    // Process stream with proper debouncing
     let accumulated = ""
-    let lastUpdate = Date.now()
     let chunkCount = 0
-    const UPDATE_INTERVAL = 500 // ms
-    const UPDATE_THRESHOLD = 100 // characters
-
-    for await (const chunk of result.textStream) {
-      accumulated += chunk
-      chunkCount++
-
-      const shouldUpdate =
-        accumulated.length >= UPDATE_THRESHOLD ||
-        Date.now() - lastUpdate >= UPDATE_INTERVAL ||
-        chunk.includes("\n\n") // Update on paragraph breaks
-
-      if (shouldUpdate && accumulated !== "") {
+    let updateTimer: NodeJS.Timeout | null = null
+    let isUpdating = false
+    
+    // Function to update Convex
+    const updateConvex = async () => {
+      if (isUpdating || accumulated === "") return
+      
+      isUpdating = true
+      try {
         await convex.mutation(api.cells.updateContent, {
           cellId,
           content: accumulated,
           streamedChunks: chunkCount,
         })
-        lastUpdate = Date.now()
+      } catch (error) {
+        console.error("Failed to update cell content:", error)
+      } finally {
+        isUpdating = false
       }
     }
+    
+    // Schedule debounced update
+    const scheduleUpdate = () => {
+      if (updateTimer) clearTimeout(updateTimer)
+      updateTimer = setTimeout(updateConvex, 1000) // 1 second debounce
+    }
+
+    for await (const chunk of result.textStream) {
+      accumulated += chunk
+      chunkCount++
+      
+      // Schedule update (will be debounced)
+      scheduleUpdate()
+    }
+    
+    // Clear any pending timer and do final update
+    if (updateTimer) clearTimeout(updateTimer)
+    await updateConvex()
 
     // Final update with complete content
     const usage = await result.usage

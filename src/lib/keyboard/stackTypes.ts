@@ -38,6 +38,19 @@ export type StackSemanticCommand =
   
   // Register operations
   | { type: 'PASTE_FROM_REGISTER'; register: string; position: number }
+  
+  // Search operations
+  | { type: 'START_SEARCH'; direction?: 'forward' | 'backward' }
+  | { type: 'SEARCH'; pattern: string; direction?: 'forward' | 'backward' }
+  | { type: 'NEXT_MATCH'; reverse?: boolean }
+  
+  // Workspace operations
+  | { type: 'SWITCH_WORKSPACE'; name: string }
+  | { type: 'LIST_WORKSPACES' }
+  | { type: 'CREATE_WORKSPACE'; name: string }
+  
+  // Repeat operations
+  | { type: 'DOT_REPEAT' }
 
 // Stack state additions
 export interface StackState {

@@ -79,6 +79,10 @@ export const shouldHandleKey = (
       // In command mode, only handle escape and enter
       return category === 'escape' || category === 'submit';
       
+    case 'search':
+      // In search mode, handle all keys (for typing search pattern)
+      return true;
+      
     case 'visual':
       // Visual mode handles navigation and actions
       break; // Continue to context check
@@ -147,6 +151,7 @@ export const extractUIState = (internal: InternalKeyboardState) => ({
   stackPosition: internal.stackPosition,
   stackDepth: internal.stackDepth,
   visualSelection: internal.visualSelection,
+  searchPattern: internal.searchPattern,
 });
 
 // Check if UI state needs updating
@@ -160,6 +165,7 @@ export const shouldUpdateUI = (
     oldState.stackPosition !== newState.stackPosition ||
     oldState.stackDepth !== newState.stackDepth ||
     oldState.visualSelection?.start !== newState.visualSelection?.start ||
-    oldState.visualSelection?.end !== newState.visualSelection?.end
+    oldState.visualSelection?.end !== newState.visualSelection?.end ||
+    oldState.searchPattern !== newState.searchPattern
   );
 }

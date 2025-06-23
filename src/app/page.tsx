@@ -37,6 +37,9 @@ export default function Home() {
           <Button size="lg" variant="secondary" asChild>
             <Link href="/demo/chat">Try Chat Demo</Link>
           </Button>
+          <Button size="lg" variant="secondary" asChild>
+            <Link href="/demo/stack">Try Stack Demo</Link>
+          </Button>
         </div>
       </section>
 

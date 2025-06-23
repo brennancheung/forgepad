@@ -47,7 +47,7 @@ import Link from 'next/link'
 
 export function WorkspaceSidebarSection() {
   const workspaces = useQuery(api.workspaces.listWorkspaces)
-  const createWorkspace = useMutation(api.workspaces.createWorkspace)
+  const createWorkspace = useMutation(api.workspaces.create)
   const renameWorkspace = useMutation(api.workspaces.renameWorkspace)
   const deleteWorkspace = useMutation(api.workspaces.deleteWorkspace)
   

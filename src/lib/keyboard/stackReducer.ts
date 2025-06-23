@@ -1,6 +1,8 @@
 import { InternalKeyboardState, Keymap, Command } from './keyboardTypes'
 import { parseStackCommand, isPartialStackCommand } from './stackParser'
 import { ParsedStackCommand } from './stackTypes'
+import { updateSearchPattern, deleteSearchChar, executeSearch, cancelSearch } from './searchTransformations'
+import { shouldRecordForRepeat } from './repeatTransformations'
 
 /**
  * Enhanced command resolution that tries stack parsing first
@@ -106,6 +108,23 @@ export const processKeyWithStack = (
   key: string,
   keymap: Keymap
 ): InternalKeyboardState => {
+  // Handle search mode specially
+  if (state.mode === 'search') {
+    if (key === '<Escape>') {
+      return cancelSearch(state)
+    } else if (key === '<Enter>') {
+      const { state: newState } = executeSearch(state)
+      return newState
+    } else if (key === '<Backspace>') {
+      return deleteSearchChar(state)
+    } else if (key.length === 1 && !key.startsWith('<')) {
+      // Regular character - add to search pattern
+      return updateSearchPattern(state, key)
+    }
+    // Other special keys in search mode - ignore
+    return state
+  }
+  
   // Handle escape specially
   if (key === '<Escape>') {
     const escapeCmd = keymap['<Escape>'] as Command | undefined
@@ -139,12 +158,21 @@ export const processKeyWithStack = (
     const context = createStackContext(state, stackParsed)
     const result = command(context)
     
+    // Check if this command should be recorded for repeat
+    const shouldRecord = shouldRecordForRepeat(newBuffer)
+    const lastChange = shouldRecord ? {
+      command: newBuffer,
+      count: context.count,
+      register: context.register
+    } : state.lastChange
+    
     return {
       ...state,
       ...(result.newKeyboardState || {}),
       commandBuffer: '',
       lastCommand: newBuffer,
       lastCommandTime: Date.now(),
+      lastChange
     }
   }
   
@@ -163,12 +191,21 @@ export const processKeyWithStack = (
     const context = createStackContext({ ...state, commandBuffer: '' }, singleParsed)
     const result = singleKey(context)
     
+    // Check if this command should be recorded for repeat
+    const shouldRecord = shouldRecordForRepeat(key)
+    const lastChange = shouldRecord ? {
+      command: key,
+      count: context.count,
+      register: context.register
+    } : state.lastChange
+    
     return {
       ...state,
       ...(result.newKeyboardState || {}),
       commandBuffer: '',
       lastCommand: key,
       lastCommandTime: Date.now(),
+      lastChange
     }
   }
   
