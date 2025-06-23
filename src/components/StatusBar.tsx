@@ -7,11 +7,28 @@ import { Id } from '@convex/_generated/dataModel'
 import { formatDistanceToNow } from 'date-fns'
 import { useKeyboard } from '@/lib/keyboard'
 import { cn } from '@/lib/utils'
+import { useState } from 'react'
 
 export function StatusBar() {
   const pathname = usePathname()
   const workspaceId = pathname.match(/\/workspace\/([^/]+)/)?.[1] as Id<'workspaces'> | undefined
-  const keyboard = useKeyboard()
+  
+  // Track keyboard mode locally
+  const [mode, setMode] = useState<'normal' | 'insert' | 'visual' | 'command' | 'search'>('normal')
+  const [commandBuffer, setCommandBuffer] = useState('')
+  
+  const keyboard = useKeyboard({
+    onKeyboardCommand: (command) => {
+      // Listen for mode changes
+      if (command.type === 'MODE_CHANGE') {
+        setMode(command.mode)
+      }
+      // Listen for command buffer updates
+      if (command.type === 'COMMAND_BUFFER_UPDATE') {
+        setCommandBuffer(command.buffer)
+      }
+    }
+  })
 
   const workspace = useQuery(api.workspaces.get, workspaceId ? { id: workspaceId } : 'skip')
 
@@ -35,44 +52,25 @@ export function StatusBar() {
     search: 'bg-yellow-600'
   } as const
   
-  const contextIndicators = {
-    'stack-navigation': '',
-    'cell-editing': '📝',
-    'search-input': '🔍',
-    'command-input': ':',
-    'modal-dialog': '🗨️',
-    'widget-interaction': '⚙️'
-  } as const
 
   return (
     <div className="flex items-center gap-3 text-xs text-muted-foreground font-mono">
       {/* Current Mode (always show) */}
       <div className={cn(
         "px-2 py-0.5 rounded text-xs font-bold text-white",
-        modeColors[keyboard.mode]
+        modeColors[mode]
       )}>
-        {keyboard.mode.toUpperCase()}
+        {mode.toUpperCase()}
       </div>
       
-      {/* Context Indicator */}
-      {keyboard.interactionContext && contextIndicators[keyboard.interactionContext] && (
-        <span className="text-muted-foreground">
-          {contextIndicators[keyboard.interactionContext]}
-        </span>
-      )}
       
-      {/* Command Buffer or Search Pattern */}
-      {keyboard.mode === 'search' && keyboard.searchPattern !== undefined ? (
+      {/* Command Buffer */}
+      {commandBuffer && (
         <>
           <span className="text-border">│</span>
-          <span className="text-yellow-500">/{keyboard.searchPattern}</span>
+          <span className="text-yellow-500">{commandBuffer}</span>
         </>
-      ) : keyboard.isRecordingCommand && keyboard.commandBuffer ? (
-        <>
-          <span className="text-border">│</span>
-          <span className="text-yellow-500">{keyboard.commandBuffer}</span>
-        </>
-      ) : null}
+      )}
       
       {/* Active Workspace */}
       {workspace && (
@@ -80,19 +78,6 @@ export function StatusBar() {
           <span className="text-border">│</span>
           <span className="font-semibold text-foreground">{workspace.name}</span>
 
-          {/* Stack Position */}
-          {keyboard.stackDepth > 0 && (
-            <>
-              <span className="text-border">│</span>
-              <span>
-                {keyboard.visualSelection ? (
-                  `${Math.min(keyboard.visualSelection.start, keyboard.visualSelection.end)}-${Math.max(keyboard.visualSelection.start, keyboard.visualSelection.end)}/${keyboard.stackDepth}`
-                ) : (
-                  `${keyboard.stackPosition}/${keyboard.stackDepth}`
-                )}
-              </span>
-            </>
-          )}
 
 
           {/* Active Stack*/}

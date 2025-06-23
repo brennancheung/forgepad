@@ -115,6 +115,8 @@ export type GenericSemanticCommand =
   | { type: 'DELETE' }
   | { type: 'CREATE' }
   | { type: 'EDIT' }
+  | { type: 'MODE_CHANGE'; mode: Mode }
+  | { type: 'COMMAND_BUFFER_UPDATE'; buffer: string }
 
 // Hook options
 export interface UseKeyboardOptions {
@@ -131,26 +133,11 @@ export interface UseKeyboardResult {
 
 // Context value exposed by the provider
 export interface KeyboardContextValue {
-  // UI state
-  mode: Mode
-  commandBuffer: string
-  isRecordingCommand: boolean
-  interactionContext: InteractionContext
-  stackPosition: number
-  stackDepth: number
-  visualSelection?: {
-    start: number
-    end: number
-  }
-  searchPattern?: string
-  
   // Focus state
   focusedComponent?: string
   
   // Stable methods
   setMode: (mode: Mode) => void
-  executeCommand: (command: string) => void
-  setStackDepth: (depth: number) => void
   
   // Focus management API
   registerFocusHandler: (id: string, handler: (command: GenericSemanticCommand) => void) => void

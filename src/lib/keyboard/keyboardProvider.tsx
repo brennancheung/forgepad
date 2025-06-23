@@ -3,8 +3,7 @@
 import React, { createContext, useState, useEffect, useRef, useMemo, ReactNode } from 'react';
 import { 
   KeyboardContextValue, 
-  InternalKeyboardState, 
-  UIKeyboardState,
+  InternalKeyboardState,
   Mode,
   KeyboardAction,
   Keymap,
@@ -16,8 +15,6 @@ import {
   formatKey, 
   getInteractionContext, 
   shouldHandleKey,
-  extractUIState,
-  shouldUpdateUI,
   parseCommand
 } from './keyboardUtils'
 import { keyboardReducer, initialState } from './keyboardReducer'
@@ -32,17 +29,11 @@ interface KeyboardProviderProps {
   keymaps?: Record<string, Keymap>;
 }
 
-export const KeyboardProvider: React.FC<KeyboardProviderProps> = ({ 
+const KeyboardProviderComponent: React.FC<KeyboardProviderProps> = ({ 
   children,
   keymaps = defaultKeymaps 
 }) => {
-  console.log('KeyboardProvider render')
-  // UI state - only what components need to render
-  const [uiState, setUiState] = useState<UIKeyboardState>(() => 
-    extractUIState(initialState)
-  );
-
-  // Internal state - doesn't trigger re-renders
+  // All state in refs - no React state updates
   const internalStateRef = useRef<InternalKeyboardState>(initialState);
   
   // Focus management
@@ -72,11 +63,6 @@ export const KeyboardProvider: React.FC<KeyboardProviderProps> = ({
     
     // Update internal state
     internalStateRef.current = newState;
-    
-    // Only update React state if UI-relevant properties changed
-    if (shouldUpdateUI(currentState, newState)) {
-      setUiState(extractUIState(newState));
-    }
   }
 
   // Process key with keymap
@@ -92,6 +78,13 @@ export const KeyboardProvider: React.FC<KeyboardProviderProps> = ({
     
     // Update internal state
     internalStateRef.current = newState;
+    
+    // Broadcast command buffer changes
+    if (newState.commandBuffer !== currentState.commandBuffer) {
+      componentHandlersRef.current.forEach((handler) => {
+        handler({ type: 'COMMAND_BUFFER_UPDATE', buffer: newState.commandBuffer });
+      });
+    }
     
     // Check if a command was executed (lastCommand or timestamp changed)
     if ((newState.lastCommand !== oldLastCommand || 
@@ -126,16 +119,20 @@ export const KeyboardProvider: React.FC<KeyboardProviderProps> = ({
         if (result.newKeyboardState) {
           const updatedState = { ...newState, ...result.newKeyboardState };
           internalStateRef.current = updatedState;
-          setUiState(extractUIState(updatedState));
+          
+          // Broadcast mode changes
+          if (result.newKeyboardState.mode && result.newKeyboardState.mode !== newState.mode) {
+            const newMode = result.newKeyboardState.mode;
+            componentHandlersRef.current.forEach((handler) => {
+              handler({ type: 'MODE_CHANGE', mode: newMode });
+            });
+          }
+          
           return;
         }
       }
     }
     
-    // Update UI if needed
-    if (shouldUpdateUI(currentState, newState)) {
-      setUiState(extractUIState(newState));
-    }
   }
 
   // Clear context cache on focus changes - removed since we're not tracking focus
@@ -183,35 +180,16 @@ export const KeyboardProvider: React.FC<KeyboardProviderProps> = ({
   }, []); // Empty deps - only runs once!
 
   const value = useMemo(() => ({
-    // UI state
-    mode: uiState.mode,
-    commandBuffer: internalStateRef.current.commandBuffer, // Read directly from internal state
-    isRecordingCommand: internalStateRef.current.commandBuffer.length > 0, // Calculate from internal state
-    interactionContext: 'stack-navigation' as InteractionContext, // TODO: Remove this field entirely
-    stackPosition: uiState.stackPosition,
-    stackDepth: uiState.stackDepth,
-    visualSelection: uiState.visualSelection,
-    searchPattern: uiState.searchPattern,
-    
     // Focus state
     focusedComponent,
     
     // Stable methods
     setMode: (mode: Mode) => {
       dispatchRef.current?.({ type: 'SET_MODE', mode });
-    },
-    executeCommand: (command: string) => {
-      dispatchRef.current?.({ type: 'EXECUTE_COMMAND', command });
-    },
-    setStackDepth: (depth: number) => {
-      const currentState = internalStateRef.current;
-      const newState = {
-        ...currentState,
-        stackDepth: depth,
-        stackPosition: Math.min(currentState.stackPosition, depth)
-      };
-      internalStateRef.current = newState;
-      setUiState(extractUIState(newState));
+      // Broadcast mode change
+      componentHandlersRef.current.forEach((handler) => {
+        handler({ type: 'MODE_CHANGE', mode });
+      });
     },
     
     // Focus management API
@@ -232,7 +210,7 @@ export const KeyboardProvider: React.FC<KeyboardProviderProps> = ({
         setFocusedComponent(undefined);
       }
     },
-  }), [uiState, focusedComponent]);
+  }), [focusedComponent]);
 
   return (
     <KeyboardContext.Provider value={value}>
@@ -240,6 +218,8 @@ export const KeyboardProvider: React.FC<KeyboardProviderProps> = ({
     </KeyboardContext.Provider>
   );
 }
+
+export const KeyboardProvider = React.memo(KeyboardProviderComponent);
 
 // Helper to resolve command from keymap
 const resolveKeymapCommand = (keymap: Keymap, keys: string): { command?: Command } => {

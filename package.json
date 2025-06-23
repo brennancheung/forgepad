@@ -5,6 +5,9 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
+    "ai": "concurrently \"pnpm run ai:typecheck\" \"pnpm run ai:lint\"",
+    "ai:typecheck": "tsc --noEmit",
+    "ai:lint": "eslint src",
     "start": "next start",
     "lint": "next lint",
     "test": "jest",
@@ -75,6 +78,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "concurrently": "^9.2.0",
     "eslint": "^9",
     "eslint-config-next": "15.3.4",
     "jest": "^30.0.2",

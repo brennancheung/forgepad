@@ -8,6 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `pnpm build` - Build the application for production (use this to check if the code compiles)
 - `pnpm lint` - Run ESLint to check for code quality issues
 - `pnpm dev` - Start development server (DO NOT run this - user will run it manually)
+- `pnpm ai` - Run type checking and linting (faster alternative to pnpm build)
 
 ### Testing
 - `pnpm test` - Run all tests
