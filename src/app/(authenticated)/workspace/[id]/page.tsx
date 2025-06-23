@@ -60,12 +60,12 @@ export default function WorkspacePage({ params }: PageProps) {
                   {stack.name}
                 </span>
                 <span className="text-sm text-muted-foreground">
-                  {stack.cells.length} cells
+                  {stack.cellCount} cells
                 </span>
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {stack.cells.length === 0 ? (
+              {stack.cellCount === 0 ? (
                 <p className="text-sm text-muted-foreground">
                   Empty stack. Push content to begin.
                 </p>

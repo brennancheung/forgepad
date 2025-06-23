@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useConvexAuth, useMutation, useQuery } from "convex/react"
+import { useMutation, useQuery } from "convex/react"
 import { api } from "@convex/_generated/api"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -10,17 +10,28 @@ import { Loader2, Send, Plus } from "lucide-react"
 import { StackDisplay } from "@/components/stack/StackDisplay"
 import { generateWithAI } from "@/actions/ai"
 import { Id } from "@convex/_generated/dataModel"
+import { useKeyboard } from "@/lib/keyboard"
+
+type StackWithCount = {
+  _id: Id<"stacks">
+  _creationTime: number
+  name: string
+  workspaceId: Id<"workspaces">
+  userId: Id<"users">
+  order?: number
+  createdAt: number
+  updatedAt: number
+  cellCount: number
+}
 
 export default function StackDemo() {
-  const { isAuthenticated } = useConvexAuth()
+  const keyboard = useKeyboard()
   const [input, setInput] = useState("")
   const [isGenerating, setIsGenerating] = useState(false)
   const [selectedStack, setSelectedStack] = useState<Id<"stacks"> | null>(null)
 
   // Get demo workspace
-  const demoWorkspace = useQuery(api.workspaces.getByName, 
-    isAuthenticated ? { name: "Demo Workspace" } : "skip"
-  )
+  const demoWorkspace = useQuery(api.workspaces.getByName, { name: "Demo Workspace" })
 
   // Create workspace if it doesn't exist
   const createWorkspace = useMutation(api.workspaces.create)
@@ -34,28 +45,35 @@ export default function StackDemo() {
   // Initialize demo workspace and stack
   useEffect(() => {
     async function initDemo() {
-      if (!isAuthenticated || demoWorkspace !== null) return
+      // If we already have a workspace, don't create another
+      if (demoWorkspace) return
 
-      try {
-        // Create demo workspace
-        const workspaceId = await createWorkspace({
-          name: "Demo Workspace"
-        })
+      // Only create if we've checked and there's no workspace
+      if (demoWorkspace === null) {
+        try {
+          console.log("Creating demo workspace...")
+          // Create demo workspace
+          const workspaceId = await createWorkspace({
+            name: "Demo Workspace"
+          })
 
-        // Create initial stack
-        const stackId = await createStack({
-          workspaceId,
-          name: "Main Stack"
-        })
+          console.log("Created workspace:", workspaceId)
+          // Create initial stack
+          const stackId = await createStack({
+            workspaceId,
+            name: "Main Stack"
+          })
 
-        setSelectedStack(stackId)
-      } catch (error) {
-        console.error("Failed to initialize demo:", error)
+          console.log("Created stack:", stackId)
+          setSelectedStack(stackId)
+        } catch (error) {
+          console.error("Failed to initialize demo:", error)
+        }
       }
     }
 
     initDemo()
-  }, [isAuthenticated, demoWorkspace, createWorkspace, createStack])
+  }, [demoWorkspace, createWorkspace, createStack])
 
   // Select first stack by default
   useEffect(() => {
@@ -96,18 +114,14 @@ export default function StackDemo() {
     }
   }
 
-  if (!isAuthenticated) {
-    return (
-      <div className="container mx-auto max-w-6xl p-4">
-        <Card className="p-8 text-center">
-          <h2 className="text-2xl font-bold mb-4">Authentication Required</h2>
-          <p className="text-muted-foreground">
-            Please sign in to use the stack demo
-          </p>
-        </Card>
-      </div>
-    )
-  }
+
+  // Debug logging
+  console.log("Demo state:", {
+    demoWorkspace,
+    demoWorkspaceLoading: demoWorkspace === undefined,
+    stacks: stacks?.length,
+    selectedStack
+  })
 
   if (!demoWorkspace || !stacks || !selectedStack) {
     return (
@@ -115,6 +129,11 @@ export default function StackDemo() {
         <Card className="p-8 text-center">
           <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
           <p className="text-muted-foreground">Initializing demo workspace...</p>
+          <p className="text-xs text-muted-foreground mt-2">
+            {!demoWorkspace && "Loading workspace..."}
+            {demoWorkspace && !stacks && "Loading stacks..."}
+            {demoWorkspace && stacks && !selectedStack && "Selecting stack..."}
+          </p>
         </Card>
       </div>
     )
@@ -123,24 +142,27 @@ export default function StackDemo() {
   const currentStack = stacks.find(s => s._id === selectedStack)
 
   return (
-    <div className="container mx-auto max-w-6xl p-4">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold mb-2">Stack + AI Streaming Demo</h1>
-        <p className="text-muted-foreground">
-          Watch AI responses stream directly into Convex-backed stack cells
-        </p>
+    <div className="h-screen flex flex-col">
+      <div className="container mx-auto max-w-6xl p-4 pb-0">
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold mb-2">Stack + AI Streaming Demo</h1>
+          <p className="text-muted-foreground">
+            Watch AI responses stream directly into Convex-backed stack cells
+          </p>
+        </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[1fr,300px] h-[calc(100vh-200px)]">
-        {/* Main Stack Display */}
-        <div className="flex flex-col gap-4 h-full">
-          <Card className="flex-1 flex flex-col overflow-hidden min-h-0">
+      <div className="container mx-auto max-w-6xl p-4 pt-0 flex-1 min-h-0">
+        <div className="grid gap-6 lg:grid-cols-[1fr,300px] h-full">
+          {/* Main Stack Display */}
+          <div className="flex flex-col gap-4 h-full">
+            <Card className="flex-1 flex flex-col overflow-hidden min-h-0" style={{ maxHeight: 'calc(100vh - 400px)' }}>
             <div className="flex items-center justify-between p-4 border-b flex-shrink-0">
               <h2 className="text-lg font-semibold">
                 {currentStack?.name || "Stack"}
               </h2>
               <span className="text-sm text-muted-foreground">
-                {currentStack?.cells.length || 0} cells
+                {(currentStack as StackWithCount)?.cellCount || 0} cells
               </span>
             </div>
             
@@ -149,16 +171,19 @@ export default function StackDemo() {
                 <StackDisplay stackId={currentStack._id} maxHeight="100%" />
               )}
             </div>
-          </Card>
+            </Card>
 
-          {/* Input Area */}
-          <Card className="p-4 flex-shrink-0">
+            {/* Input Area */}
+            <Card className="p-4 flex-shrink-0">
             <form onSubmit={handleSubmit} className="space-y-4">
               <Textarea
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="Enter a prompt to generate AI response..."
                 className="min-h-[100px] resize-none"
+                onFocus={() => {
+                  keyboard.setMode('insert')
+                }}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && e.metaKey) {
                     e.preventDefault()
@@ -188,12 +213,12 @@ export default function StackDemo() {
                 </Button>
               </div>
             </form>
-          </Card>
-        </div>
+            </Card>
+          </div>
 
-        {/* Stack List Sidebar */}
-        <div className="flex flex-col gap-4 h-full overflow-y-auto">
-          <Card className="p-4 flex-shrink-0">
+          {/* Stack List Sidebar */}
+          <div className="flex flex-col gap-4 h-full overflow-y-auto">
+            <Card className="p-4 flex-shrink-0">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-semibold">Stacks</h3>
               <Button
@@ -223,14 +248,14 @@ export default function StackDemo() {
                 >
                   <div className="font-medium">{stack.name}</div>
                   <div className="text-xs opacity-70">
-                    {stack.cells.length} cells
+                    {(stack as StackWithCount).cellCount || 0} cells
                   </div>
                 </button>
               ))}
             </div>
-          </Card>
+            </Card>
 
-          <Card className="p-4 text-sm text-muted-foreground flex-shrink-0">
+            <Card className="p-4 text-sm text-muted-foreground flex-shrink-0">
             <h4 className="font-semibold mb-2">How it works:</h4>
             <ol className="list-decimal list-inside space-y-1">
               <li>Enter a prompt in the input field</li>
@@ -238,7 +263,8 @@ export default function StackDemo() {
               <li>Cell status updates in real-time</li>
               <li>Multiple stacks can be managed</li>
             </ol>
-          </Card>
+            </Card>
+          </div>
         </div>
       </div>
     </div>

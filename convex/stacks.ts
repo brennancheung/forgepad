@@ -26,7 +26,22 @@ export const listByWorkspace = query({
       .withIndex('by_workspace', (q) => q.eq('workspaceId', args.workspaceId))
       .collect()
 
-    return stacks.sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+    // Get cell counts for each stack
+    const stacksWithCounts = await Promise.all(
+      stacks.map(async (stack) => {
+        const cells = await ctx.db
+          .query('cells')
+          .withIndex('by_stack', (q) => q.eq('stackId', stack._id))
+          .collect()
+        
+        return {
+          ...stack,
+          cellCount: cells.length
+        }
+      })
+    )
+
+    return stacksWithCounts.sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
   },
 })
 
@@ -91,7 +106,6 @@ export const create = mutation({
       name: args.name,
       workspaceId: args.workspaceId,
       userId: user._id,
-      cells: [],
       order: maxOrder + 1,
       createdAt: now,
       updatedAt: now,
@@ -205,7 +219,7 @@ export const deleteStack = mutation({
   },
 })
 
-// Push a cell to a stack
+// Push a cell to a stack (deprecated - cells are now created directly with stackPosition)
 export const pushCell = mutation({
   args: {
     stackId: v.id('stacks'),
@@ -229,9 +243,8 @@ export const pushCell = mutation({
 
     const now = Date.now()
     
-    // Add cell to stack
+    // Update stack timestamp
     await ctx.db.patch(args.stackId, {
-      cells: [...stack.cells, args.cellId],
       updatedAt: now,
     })
 
@@ -263,16 +276,25 @@ export const popCell = mutation({
       throw new Error('Stack not found or unauthorized')
     }
 
-    if (stack.cells.length === 0) {
+    // Find the cell with the highest stackPosition
+    const cells = await ctx.db
+      .query('cells')
+      .withIndex('by_stack', (q) => q.eq('stackId', args.stackId))
+      .collect()
+    
+    if (cells.length === 0) {
       throw new Error('Stack is empty')
     }
 
+    // Find the cell with the highest stackPosition
+    const topCell = cells.reduce((top, cell) => 
+      cell.stackPosition > top.stackPosition ? cell : top
+    )
+
     const now = Date.now()
-    const poppedCellId = stack.cells[stack.cells.length - 1]
     
-    // Remove last cell from stack
+    // Update stack timestamp
     await ctx.db.patch(args.stackId, {
-      cells: stack.cells.slice(0, -1),
       updatedAt: now,
     })
 
@@ -282,8 +304,8 @@ export const popCell = mutation({
     })
 
     // Delete the cell
-    await ctx.db.delete(poppedCellId)
+    await ctx.db.delete(topCell._id)
 
-    return poppedCellId
+    return topCell._id
   },
 })

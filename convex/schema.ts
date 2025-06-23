@@ -29,7 +29,6 @@ export default defineSchema({
     name: v.string(),
     workspaceId: v.id('workspaces'),
     userId: v.id('users'),
-    cells: v.array(v.id('cells')),
     order: v.optional(v.number()),
     computationalStack: v.optional(
       v.array(

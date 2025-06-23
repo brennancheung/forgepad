@@ -4,7 +4,6 @@ import { ClerkProvider } from '@clerk/nextjs'
 import { ConvexClientProvider } from '@/providers/ConvexClientProvider'
 import { ThemeProvider } from '@/components/ThemeProvider'
 import { KeyboardProvider } from '@/lib/keyboard'
-import { StatusBar } from '@/components/keyboard/statusBar'
 import { Toaster } from '@/components/ui/sonner'
 import './globals.css'
 
@@ -36,7 +35,6 @@ export default function RootLayout({
             <ConvexClientProvider>
               <KeyboardProvider>
                 {children}
-                <StatusBar />
                 <Toaster />
               </KeyboardProvider>
             </ConvexClientProvider>

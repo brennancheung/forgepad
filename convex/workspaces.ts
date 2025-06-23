@@ -122,7 +122,6 @@ export const create = mutation({
       name: 'Main',
       workspaceId,
       userId: user._id,
-      cells: [],
       order: 0,
       createdAt: now,
       updatedAt: now,

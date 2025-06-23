@@ -50,8 +50,12 @@ export const create = mutation({
       throw new Error('Stack not found or unauthorized')
     }
 
-    // Calculate stack position
-    const stackPosition = stack.cells.length
+    // Calculate stack position by counting existing cells
+    const existingCells = await ctx.db
+      .query('cells')
+      .withIndex('by_stack', (q) => q.eq('stackId', args.stackId))
+      .collect()
+    const stackPosition = existingCells.length
 
     const now = Date.now()
     
@@ -68,9 +72,8 @@ export const create = mutation({
       updatedAt: now,
     })
 
-    // Add cell to stack
+    // Update stack timestamp
     await ctx.db.patch(args.stackId, {
-      cells: [...stack.cells, cellId],
       updatedAt: now,
     })
 
@@ -120,8 +123,12 @@ export const createFromServer = mutation({
       throw new Error('Stack not found')
     }
 
-    // Calculate stack position
-    const stackPosition = stack.cells.length
+    // Calculate stack position by counting existing cells
+    const existingCells = await ctx.db
+      .query('cells')
+      .withIndex('by_stack', (q) => q.eq('stackId', args.stackId))
+      .collect()
+    const stackPosition = existingCells.length
 
     const now = Date.now()
     
@@ -137,9 +144,8 @@ export const createFromServer = mutation({
       updatedAt: now,
     })
 
-    // Add cell to stack
+    // Update stack timestamp
     await ctx.db.patch(args.stackId, {
-      cells: [...stack.cells, cellId],
       updatedAt: now,
     })
 
@@ -335,6 +341,43 @@ export const listByStack = query({
   },
 })
 
+// Get the top cell of a stack (highest stackPosition)
+export const getTopCell = query({
+  args: { stackId: v.id('stacks') },
+  handler: async (ctx, args) => {
+    const cells = await ctx.db
+      .query('cells')
+      .withIndex('by_stack', (q) => q.eq('stackId', args.stackId))
+      .collect()
+    
+    if (cells.length === 0) return null
+    
+    // Find the cell with the highest stackPosition
+    return cells.reduce((top, cell) => 
+      cell.stackPosition > top.stackPosition ? cell : top
+    )
+  },
+})
+
+// Get multiple top cells from a stack
+export const getTopCells = query({
+  args: { 
+    stackId: v.id('stacks'),
+    count: v.number()
+  },
+  handler: async (ctx, args) => {
+    const cells = await ctx.db
+      .query('cells')
+      .withIndex('by_stack', (q) => q.eq('stackId', args.stackId))
+      .collect()
+    
+    // Sort by stackPosition descending and take the top N
+    return cells
+      .sort((a, b) => b.stackPosition - a.stackPosition)
+      .slice(0, args.count)
+  },
+})
+
 // Delete a cell
 export const deleteCell = mutation({
   args: {
@@ -359,10 +402,26 @@ export const deleteCell = mutation({
       throw new Error('Unauthorized')
     }
 
-    // Remove from stack
-    const updatedCells = stack.cells.filter(id => id !== args.cellId)
+    // Delete the cell
+    await ctx.db.delete(args.cellId)
+
+    // Update remaining cells' positions
+    const remainingCells = await ctx.db
+      .query('cells')
+      .withIndex('by_stack', (q) => q.eq('stackId', cell.stackId))
+      .collect()
+    
+    // Renumber cells with positions greater than the deleted cell
+    for (const remainingCell of remainingCells) {
+      if (remainingCell.stackPosition > cell.stackPosition) {
+        await ctx.db.patch(remainingCell._id, {
+          stackPosition: remainingCell.stackPosition - 1,
+        })
+      }
+    }
+
+    // Update stack timestamp
     await ctx.db.patch(cell.stackId, {
-      cells: updatedCells,
       updatedAt: Date.now(),
     })
 
@@ -370,8 +429,5 @@ export const deleteCell = mutation({
     await ctx.db.patch(stack.workspaceId, {
       updatedAt: Date.now(),
     })
-
-    // Delete the cell
-    await ctx.db.delete(args.cellId)
   },
 })

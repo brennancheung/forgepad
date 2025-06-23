@@ -82,7 +82,7 @@ export async function generateWithAI({
     // Schedule debounced update
     const scheduleUpdate = () => {
       if (updateTimer) clearTimeout(updateTimer)
-      updateTimer = setTimeout(updateConvex, 1000) // 1 second debounce
+      updateTimer = setTimeout(updateConvex, 250) // 250ms debounce
     }
 
     for await (const chunk of result.textStream) {
@@ -211,13 +211,10 @@ export async function performStackOperation({
   
   switch (operation) {
     case "query": {
-      if (stack.cells.length === 0) {
+      const topCell = await convex.query(api.cells.getTopCell, { stackId })
+      if (!topCell) {
         throw new Error("Stack is empty")
       }
-
-      const topCellId = stack.cells[stack.cells.length - 1]
-      const topCell = await convex.query(api.cells.get, { id: topCellId })
-      if (!topCell) throw new Error("Top cell not found")
       
       const prompt = `${parameters.query as string}\n\nContext:\n${topCell.content}`
       return generateWithAI({
@@ -227,13 +224,10 @@ export async function performStackOperation({
     }
     
     case "expand": {
-      if (stack.cells.length === 0) {
+      const topCell = await convex.query(api.cells.getTopCell, { stackId })
+      if (!topCell) {
         throw new Error("Stack is empty")
       }
-
-      const topCellId = stack.cells[stack.cells.length - 1]
-      const topCell = await convex.query(api.cells.get, { id: topCellId })
-      if (!topCell) throw new Error("Top cell not found")
       
       const prompt = `Please expand on the following content with more detail and examples:\n\n${topCell.content}`
       return generateWithAI({
@@ -243,13 +237,10 @@ export async function performStackOperation({
     }
 
     case "summarize": {
-      if (stack.cells.length === 0) {
+      const topCell = await convex.query(api.cells.getTopCell, { stackId })
+      if (!topCell) {
         throw new Error("Stack is empty")
       }
-
-      const topCellId = stack.cells[stack.cells.length - 1]
-      const topCell = await convex.query(api.cells.get, { id: topCellId })
-      if (!topCell) throw new Error("Top cell not found")
       
       const prompt = `Please provide a concise summary of the following content:\n\n${topCell.content}`
       return generateWithAI({
@@ -259,13 +250,10 @@ export async function performStackOperation({
     }
 
     case "filter": {
-      if (stack.cells.length === 0) {
+      const topCell = await convex.query(api.cells.getTopCell, { stackId })
+      if (!topCell) {
         throw new Error("Stack is empty")
       }
-
-      const topCellId = stack.cells[stack.cells.length - 1]
-      const topCell = await convex.query(api.cells.get, { id: topCellId })
-      if (!topCell) throw new Error("Top cell not found")
       
       const prompt = `Extract only the parts related to "${parameters.filterQuery as string}" from the following content:\n\n${topCell.content}`
       return generateWithAI({
@@ -276,17 +264,14 @@ export async function performStackOperation({
 
     case "merge": {
       const count = (parameters.count as number) || 2
-      if (stack.cells.length < count) {
-        throw new Error(`Not enough cells in stack (need ${count}, have ${stack.cells.length})`)
-      }
-
-      const cellIds = stack.cells.slice(-count)
-      const cells = await Promise.all(
-        cellIds.map(id => convex.query(api.cells.get, { id }))
-      )
+      const topCells = await convex.query(api.cells.getTopCells, { stackId, count })
       
-      const contents = cells
-        .filter(cell => cell !== null)
+      if (topCells.length < count) {
+        throw new Error(`Not enough cells in stack (need ${count}, have ${topCells.length})`)
+      }
+      
+      const contents = topCells
+        .reverse() // Reverse to get chronological order
         .map((cell, i) => `### Section ${i + 1}\n\n${cell.content}`)
         .join("\n\n")
       

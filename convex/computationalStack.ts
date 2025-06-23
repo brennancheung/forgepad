@@ -140,9 +140,12 @@ export const persist = mutation({
 
     const topValue = compStack[compStack.length - 1];
     
-    // Find the next position for the new cell
-    const maxPosition = Math.max(...(stack.cells.map((_, idx) => idx)), -1);
-    const newPosition = maxPosition + 1;
+    // Find the next position for the new cell by counting existing cells
+    const existingCells = await ctx.db
+      .query('cells')
+      .withIndex('by_stack', (q) => q.eq('stackId', args.stackId))
+      .collect();
+    const newPosition = existingCells.length;
     
     // Create a new cell with the computational value
     const cellId = await ctx.db.insert("cells", {
@@ -159,12 +162,6 @@ export const persist = mutation({
       name: args.name,
       createdAt: Date.now(),
       updatedAt: Date.now(),
-    });
-
-    // Add to stack cells
-    const newCells = [...stack.cells, cellId];
-    await ctx.db.patch(args.stackId, {
-      cells: newCells,
     });
 
     // Remove from computational stack and replace with cell reference

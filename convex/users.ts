@@ -57,7 +57,6 @@ export const upsertUser = mutation({
       name: 'Main',
       workspaceId,
       userId,
-      cells: [],
       order: 0,
       createdAt: now,
       updatedAt: now,
