@@ -29,7 +29,7 @@ export function StackDisplay({ stackId, onRequestPromptFocus }: StackDisplayProp
   const prevCellsLength = useRef(0)
   
   // Use keyboard hook to handle navigation
-  const { hasFocus, requestFocus } = useKeyboard({
+  useKeyboard({
     onKeyboardCommand: (command) => {
       if (!cells || cells.length === 0) return
       
@@ -57,12 +57,8 @@ export function StackDisplay({ stackId, onRequestPromptFocus }: StackDisplayProp
     }
   })
   
-  // Request focus when cells are loaded
-  useEffect(() => {
-    if (cells && cells.length > 0 && !hasFocus) {
-      requestFocus()
-    }
-  }, [cells, hasFocus, requestFocus])
+  // Remove auto-focus to prevent infinite loops
+  // Users can manually focus by clicking or using keyboard navigation
   
   // Scroll a specific cell into view
   const scrollCellIntoView = useCallback((index: number) => {

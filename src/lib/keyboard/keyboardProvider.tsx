@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useState, useEffect, useRef, useMemo, ReactNode } from 'react';
+import React, { createContext, useState, useEffect, useRef, useMemo, useCallback, ReactNode } from 'react';
 import { 
   KeyboardContextValue, 
   InternalKeyboardState,
@@ -36,8 +36,10 @@ const KeyboardProviderComponent: React.FC<KeyboardProviderProps> = ({
   // All state in refs - no React state updates
   const internalStateRef = useRef<InternalKeyboardState>(initialState);
   
-  // Focus management
+  // Focus management - use ref to avoid stale closures
   const [focusedComponent, setFocusedComponent] = useState<string | undefined>();
+  const focusedComponentRef = useRef<string | undefined>(focusedComponent);
+  focusedComponentRef.current = focusedComponent;
   const componentHandlersRef = useRef<Map<string, (command: GenericSemanticCommand) => void>>(new Map());
 
   // Focus tracking - removed to improve performance
@@ -179,38 +181,46 @@ const KeyboardProviderComponent: React.FC<KeyboardProviderProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []); // Empty deps - only runs once!
 
+  // Create truly stable methods using useCallback
+  const setMode = useCallback((mode: Mode) => {
+    dispatchRef.current?.({ type: 'SET_MODE', mode });
+    // Broadcast mode change
+    componentHandlersRef.current.forEach((handler) => {
+      handler({ type: 'MODE_CHANGE', mode });
+    });
+  }, []);
+  
+  const registerFocusHandler = useCallback((id: string, handler: (command: GenericSemanticCommand) => void) => {
+    componentHandlersRef.current.set(id, handler);
+  }, []);
+  
+  const unregisterFocusHandler = useCallback((id: string) => {
+    componentHandlersRef.current.delete(id);
+    if (focusedComponentRef.current === id) {
+      setFocusedComponent(undefined);
+    }
+  }, []);
+  
+  const requestFocus = useCallback((id: string) => {
+    setFocusedComponent(id);
+  }, []);
+  
+  const releaseFocus = useCallback((id: string) => {
+    if (focusedComponentRef.current === id) {
+      setFocusedComponent(undefined);
+    }
+  }, []);
+  
   const value = useMemo(() => ({
     // Focus state
     focusedComponent,
-    
     // Stable methods
-    setMode: (mode: Mode) => {
-      dispatchRef.current?.({ type: 'SET_MODE', mode });
-      // Broadcast mode change
-      componentHandlersRef.current.forEach((handler) => {
-        handler({ type: 'MODE_CHANGE', mode });
-      });
-    },
-    
-    // Focus management API
-    registerFocusHandler: (id: string, handler: (command: GenericSemanticCommand) => void) => {
-      componentHandlersRef.current.set(id, handler);
-    },
-    unregisterFocusHandler: (id: string) => {
-      componentHandlersRef.current.delete(id);
-      if (focusedComponent === id) {
-        setFocusedComponent(undefined);
-      }
-    },
-    requestFocus: (id: string) => {
-      setFocusedComponent(id);
-    },
-    releaseFocus: (id: string) => {
-      if (focusedComponent === id) {
-        setFocusedComponent(undefined);
-      }
-    },
-  }), [focusedComponent]);
+    setMode,
+    registerFocusHandler,
+    unregisterFocusHandler,
+    requestFocus,
+    releaseFocus,
+  }), [focusedComponent, setMode, registerFocusHandler, unregisterFocusHandler, requestFocus, releaseFocus]);
 
   return (
     <KeyboardContext.Provider value={value}>

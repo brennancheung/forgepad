@@ -122,4 +122,15 @@ export default defineSchema({
   })
     .index('by_workspace', ['workspaceId'])
     .index('by_stack', ['stackId']),
+
+  prompts: defineTable({
+    name: v.string(),
+    userId: v.string(),  // Clerk user ID, not v.id('users')
+    content: v.string(),
+    description: v.string(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index('by_user', ['userId'])
+    .index('by_user_name', ['userId', 'name']),
 })

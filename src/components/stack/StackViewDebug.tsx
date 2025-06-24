@@ -18,7 +18,11 @@ interface StackViewProps {
   cellCount?: number
 }
 
-export function StackView({ stackId, stackName, cellCount }: StackViewProps) {
+export function StackViewDebug({ stackId, stackName, cellCount }: StackViewProps) {
+  const renderCount = useRef(0)
+  renderCount.current++
+  console.log(`[StackViewDebug] Render #${renderCount.current}`)
+  
   const { setMode } = useKeyboard({
     onKeyboardCommand: (command) => {
       switch (command.type) {
@@ -104,15 +108,20 @@ export function StackView({ stackId, stackName, cellCount }: StackViewProps) {
             ref={textareaRef}
             value={input}
             onChange={(e) => {
+              const start = performance.now()
+              console.log(`[StackViewDebug] onChange start`)
               setInput(e.target.value)
+              console.log(`[StackViewDebug] onChange end - took ${(performance.now() - start).toFixed(2)}ms`)
             }}
             placeholder="Enter a prompt to generate AI response..."
             className="min-h-[100px] resize-none"
             onFocus={() => {
+              console.log('[StackViewDebug] onFocus')
               // Auto-switch to insert mode when focusing textarea
               setMode('insert')
             }}
             onBlur={() => {
+              console.log('[StackViewDebug] onBlur')
               // Switch back to normal mode when losing focus
               setMode('normal')
             }}

@@ -4,6 +4,7 @@ import { ClerkProvider } from '@clerk/nextjs'
 import { ConvexClientProvider } from '@/providers/ConvexClientProvider'
 import { ThemeProvider } from '@/components/ThemeProvider'
 import { KeyboardProvider } from '@/lib/keyboard'
+import { PromptModalProvider } from '@/hooks/use-prompt-modal'
 import { Toaster } from '@/components/ui/sonner'
 import './globals.css'
 
@@ -34,8 +35,10 @@ export default function RootLayout({
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
             <ConvexClientProvider>
               <KeyboardProvider>
-                {children}
-                <Toaster />
+                <PromptModalProvider>
+                  {children}
+                  <Toaster />
+                </PromptModalProvider>
               </KeyboardProvider>
             </ConvexClientProvider>
           </ThemeProvider>

@@ -11,7 +11,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@/components/ui/sidebar'
-import { Home } from 'lucide-react'
+import { Home, FileText } from 'lucide-react'
 import Link from 'next/link'
 import { UserNav } from './UserNav'
 import { WorkspaceSidebarSection } from './workspace/WorkspaceSidebarSection'
@@ -21,6 +21,11 @@ const menuItems = [
     title: 'Dashboard',
     icon: Home,
     href: '/dashboard',
+  },
+  {
+    title: 'Prompts',
+    icon: FileText,
+    href: '/prompts',
   },
 ]
 
