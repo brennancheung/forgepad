@@ -14,10 +14,9 @@ import { useKeyboard } from "@/lib/keyboard"
 interface StackDisplayProps {
   stackId: Id<"stacks">
   maxHeight?: string
-  onRequestPromptFocus?: () => void
 }
 
-export function StackDisplay({ stackId, onRequestPromptFocus }: StackDisplayProps) {
+export function StackDisplay({ stackId }: StackDisplayProps) {
   const stack = useQuery(api.stacks.get, { id: stackId })
   const cells = useQuery(api.cells.listByStack, stack ? { stackId } : "skip")
   
@@ -46,11 +45,6 @@ export function StackDisplay({ stackId, onRequestPromptFocus }: StackDisplayProp
           const newIndex = Math.min(cells.length - 1, currentIndex + 1)
           setSelectedCellIndex(newIndex)
           scrollCellIntoView(newIndex)
-          break
-        }
-        case 'EDIT': {
-          // Request focus on the prompt input
-          onRequestPromptFocus?.()
           break
         }
       }

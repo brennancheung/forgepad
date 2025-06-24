@@ -1,16 +1,13 @@
 'use client'
 
-import { useState, useRef, useCallback, useMemo } from 'react'
-import { useMutation, useQuery } from 'convex/react'
+import { useCallback, useMemo } from 'react'
+import { useQuery, useMutation } from 'convex/react'
 import { api } from '@convex/_generated/api'
 import { Card } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Textarea } from '@/components/ui/textarea'
-import { Loader2, Send } from 'lucide-react'
 import { StackDisplay } from './StackDisplay'
-import { generateWithAI } from '@/actions/ai'
+import { StackPrompt } from './StackPrompt'
 import { Id } from '@convex/_generated/dataModel'
-import { useKeyboard } from '@/lib/keyboard'
+import { generateWithAI } from '@/actions/ai'
 
 interface StackViewProps {
   stackId: Id<'stacks'>
@@ -19,29 +16,9 @@ interface StackViewProps {
 }
 
 export function StackView({ stackId, stackName, cellCount }: StackViewProps) {
-  const { setMode } = useKeyboard({
-    onKeyboardCommand: (command) => {
-      switch (command.type) {
-        case 'CANCEL':
-          // Blur the textarea when escape is pressed
-          textareaRef.current?.blur()
-          break
-      }
-    }
-  })
-  const [input, setInput] = useState('')
-  const textareaRef = useRef<HTMLTextAreaElement>(null)
-  const formRef = useRef<HTMLFormElement>(null)
-
   const createCell = useMutation(api.cells.create)
-  
-  const handlePromptFocus = useCallback(() => {
-    if (textareaRef.current) {
-      textareaRef.current.focus()
-    }
-  }, [])
 
-  // Check if any cells are currently streaming
+  // Get cells for conversation history and count
   const cells = useQuery(api.cells.listByStack, { stackId })
   const hasStreamingCell = cells?.some(
     (cell) => cell.status === 'streaming' || cell.status === 'pending'
@@ -58,12 +35,8 @@ export function StackView({ stackId, stackName, cellCount }: StackViewProps) {
       }))
   }, [cells])
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!input.trim() || hasStreamingCell) return
-
-    const promptText = input.trim()
-    setInput('')
+  const handleSubmit = useCallback(async (promptText: string) => {
+    if (!promptText.trim() || hasStreamingCell) return
 
     try {
       // First, create a cell for the user's prompt
@@ -86,7 +59,7 @@ export function StackView({ stackId, stackName, cellCount }: StackViewProps) {
     } catch (error) {
       console.error('Generation error:', error)
     }
-  }
+  }, [hasStreamingCell, createCell, stackId, conversationHistory])
 
   return (
     <div className="flex flex-col gap-4 h-full">
@@ -105,54 +78,15 @@ export function StackView({ stackId, stackName, cellCount }: StackViewProps) {
           <StackDisplay 
             stackId={stackId} 
             maxHeight="100%" 
-            onRequestPromptFocus={handlePromptFocus}
           />
         </div>
       </Card>
 
-      {/* Input Area */}
-      <Card className="p-4 flex-shrink-0">
-        <form ref={formRef} onSubmit={handleSubmit} className="space-y-4">
-          <Textarea
-            ref={textareaRef}
-            value={input}
-            onChange={(e) => {
-              setInput(e.target.value)
-            }}
-            placeholder="Enter a prompt to generate AI response..."
-            className="min-h-[100px] resize-none"
-            onFocus={() => {
-              // Auto-switch to insert mode when focusing textarea
-              setMode('insert')
-            }}
-            onBlur={() => {
-              // Switch back to normal mode when losing focus
-              setMode('normal')
-            }}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault()
-                formRef.current?.requestSubmit()
-              }
-            }}
-          />
-          <div className="flex justify-end items-center">
-            <Button type="submit" disabled={!input.trim() || hasStreamingCell} className="dark:text-white">
-              {hasStreamingCell ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Generating...
-                </>
-              ) : (
-                <>
-                  <Send className="h-4 w-4 mr-2" />
-                  Generate
-                </>
-              )}
-            </Button>
-          </div>
-        </form>
-      </Card>
+      {/* Input Area - Now in its own component */}
+      <StackPrompt 
+        onSubmit={handleSubmit}
+        hasStreamingCell={hasStreamingCell}
+      />
     </div>
   )
 }
