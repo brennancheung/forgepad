@@ -1,12 +1,13 @@
 'use client'
 
-import { use } from 'react'
+import { use, useState } from 'react'
 import { useQuery, useMutation } from 'convex/react'
 import { api } from '@convex/_generated/api'
 import { Id } from '@convex/_generated/dataModel'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Plus, Layers } from 'lucide-react'
+import { StackTabs } from '@/components/stack/StackTabs'
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -19,6 +20,7 @@ export default function WorkspacePage({ params }: PageProps) {
   const workspace = useQuery(api.workspaces.get, { id: workspaceId })
   const stacks = useQuery(api.stacks.listByWorkspace, { workspaceId })
   const createStack = useMutation(api.stacks.create)
+  const [selectedStackId, setSelectedStackId] = useState<Id<'stacks'> | null>(null)
 
   if (!workspace) {
     return (
@@ -29,68 +31,44 @@ export default function WorkspacePage({ params }: PageProps) {
   }
 
   const handleCreateStack = async () => {
-    await createStack({
+    const stackId = await createStack({
       workspaceId,
       name: `Stack ${(stacks?.length || 0) + 1}`
     })
+    setSelectedStackId(stackId)
   }
 
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">{workspace.name}</h1>
-          {workspace.description && (
-            <p className="text-muted-foreground mt-1">{workspace.description}</p>
-          )}
-        </div>
-        <Button onClick={handleCreateStack}>
-          <Plus className="mr-2 h-4 w-4" />
-          New Stack
-        </Button>
-      </div>
+  // Auto-select first stack if none selected
+  if (stacks && stacks.length > 0 && !selectedStackId) {
+    setSelectedStackId(stacks[0]._id)
+  }
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {stacks?.map((stack) => (
-          <Card key={stack._id}>
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <span className="flex items-center gap-2">
-                  <Layers className="h-5 w-5" />
-                  {stack.name}
-                </span>
-                <span className="text-sm text-muted-foreground">
-                  {stack.cellCount} cells
-                </span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {stack.cellCount === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  Empty stack. Push content to begin.
-                </p>
-              ) : (
-                <p className="text-sm text-muted-foreground">
-                  Stack operations coming soon...
-                </p>
-              )}
-            </CardContent>
-          </Card>
-        ))}
-        
-        {(!stacks || stacks.length === 0) && (
-          <Card className="border-dashed">
-            <CardContent className="flex items-center justify-center h-full p-6">
-              <div className="text-center">
-                <Layers className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
-                <p className="text-sm text-muted-foreground">
-                  No stacks yet. Create your first stack to get started.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-      </div>
+  // Calculate available height accounting for header and padding
+  return (
+    <div className="h-[calc(100vh-5.5rem)] -m-6 p-6 flex flex-col">
+      {stacks && stacks.length > 0 ? (
+        <StackTabs 
+          workspaceId={workspaceId}
+          stacks={stacks}
+          selectedStackId={selectedStackId}
+          onStackSelect={setSelectedStackId}
+        />
+      ) : (
+        <Card className="border-dashed m-auto max-w-md">
+          <CardContent className="flex items-center justify-center p-6">
+            <div className="text-center">
+              <Layers className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
+              <p className="text-sm text-muted-foreground mb-4">
+                No stacks yet. Create your first stack to get started.
+              </p>
+              <Button onClick={handleCreateStack}>
+                <Plus className="mr-2 h-4 w-4" />
+                Create First Stack
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   )
 }

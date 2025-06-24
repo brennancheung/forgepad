@@ -124,7 +124,7 @@ export function StackView({ stackId, stackName, cellCount }: StackViewProps) {
             }}
           />
           <div className="flex justify-end items-center">
-            <Button type="submit" disabled={!input.trim() || hasStreamingCell}>
+            <Button type="submit" disabled={!input.trim() || hasStreamingCell} className="dark:text-white">
               {hasStreamingCell ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />

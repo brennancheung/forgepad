@@ -34,7 +34,7 @@ export function StackTabs({ workspaceId, stacks, selectedStackId, onStackSelect 
   const deleteStack = useMutation(api.stacks.deleteStack)
 
   // Handle keyboard navigation
-  const { hasFocus, requestFocus } = useKeyboard({
+  const { requestFocus } = useKeyboard({
     focusOnMount: true,
     onKeyboardCommand: (command) => {
       const currentIndex = stacks.findIndex((s) => s._id === selectedStackId)
@@ -77,7 +77,7 @@ export function StackTabs({ workspaceId, stacks, selectedStackId, onStackSelect 
     <Tabs
       value={selectedStackId || ''}
       onValueChange={(value) => onStackSelect(value as Id<'stacks'>)}
-      className={cn('flex flex-col h-full', hasFocus && 'ring-2 ring-primary ring-offset-2')}
+      className="flex flex-col h-full"
       onClick={() => requestFocus()}
     >
       <div className="border-b">
@@ -88,7 +88,7 @@ export function StackTabs({ workspaceId, stacks, selectedStackId, onStackSelect 
               value={stack._id}
               className={cn(
                 'relative px-4 py-2 rounded-none border-b-2 border-transparent group',
-                'data-[state=active]:border-primary data-[state=active]:bg-transparent',
+                'data-[state=active]:border-foreground data-[state=active]:bg-transparent',
                 'hover:bg-muted/50 transition-colors flex items-center gap-1'
               )}
             >
@@ -114,7 +114,7 @@ export function StackTabs({ workspaceId, stacks, selectedStackId, onStackSelect 
       </div>
 
       {stacks.map((stack) => (
-        <TabsContent key={stack._id} value={stack._id} className="flex-1 p-4 m-0 overflow-hidden">
+        <TabsContent key={stack._id} value={stack._id} className="flex-1 mt-0 overflow-hidden">
           <StackView stackId={stack._id} stackName={stack.name} cellCount={stack.cellCount} />
         </TabsContent>
       ))}

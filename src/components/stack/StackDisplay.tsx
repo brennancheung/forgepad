@@ -181,7 +181,7 @@ export function StackDisplay({ stackId, onRequestPromptFocus }: StackDisplayProp
               <div className={cn(
                 "absolute -left-1 top-0 bottom-0 w-1 rounded-full transition-all duration-150",
                 selectedCellIndex === index 
-                  ? "bg-primary" 
+                  ? "bg-foreground" 
                   : "bg-transparent"
               )} />
               
@@ -189,7 +189,7 @@ export function StackDisplay({ stackId, onRequestPromptFocus }: StackDisplayProp
               <div className={cn(
                 "absolute -left-10 top-4 text-sm font-mono transition-all duration-150",
                 selectedCellIndex === index 
-                  ? "text-primary font-bold" 
+                  ? "text-foreground font-bold" 
                   : "text-muted-foreground"
               )}>
                 {index + 1}
@@ -197,7 +197,7 @@ export function StackDisplay({ stackId, onRequestPromptFocus }: StackDisplayProp
               
               <div className={cn(
                 "transition-all duration-150 rounded-lg",
-                selectedCellIndex === index && "bg-accent/50 ring-2 ring-primary/50 shadow-md"
+                selectedCellIndex === index && "bg-accent/50 ring-2 ring-foreground/20 shadow-md"
               )}>
                 <CellDisplay cell={cell} />
               </div>
