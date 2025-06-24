@@ -20,13 +20,21 @@ export async function generateWithAI({
   model = 'gpt-4o',
   temperature = 0.7,
   maxTokens = 2000,
+  conversationHistory = [],
 }: {
   prompt: string
   stackId: Id<'stacks'>
   model?: string
   temperature?: number
   maxTokens?: number
+  conversationHistory?: Array<{ role: 'user' | 'assistant', content: string }>
 }) {
+  // Build conversation messages from history
+  const messages = [...conversationHistory]
+  
+  // Add the current prompt
+  messages.push({ role: 'user' as const, content: prompt })
+
   // Create cell in pending state
   const cellId = await convex.mutation(api.cells.createFromServer, {
     stackId,
@@ -52,7 +60,8 @@ export async function generateWithAI({
     // Start streaming with AI SDK v5
     const result = streamText({
       model: openai(model),
-      prompt,
+      messages,
+      temperature,
     })
 
     // Process stream with proper debouncing

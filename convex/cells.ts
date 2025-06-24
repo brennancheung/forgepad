@@ -341,6 +341,7 @@ export const listByStack = query({
   },
 })
 
+
 // Get the top cell of a stack (highest stackPosition)
 export const getTopCell = query({
   args: { stackId: v.id('stacks') },

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useMemo } from 'react'
 import { useMutation, useQuery } from 'convex/react'
 import { api } from '@convex/_generated/api'
 import { Card } from '@/components/ui/card'
@@ -31,6 +31,7 @@ export function StackView({ stackId, stackName, cellCount }: StackViewProps) {
   })
   const [input, setInput] = useState('')
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const formRef = useRef<HTMLFormElement>(null)
 
   const createCell = useMutation(api.cells.create)
   
@@ -45,6 +46,17 @@ export function StackView({ stackId, stackName, cellCount }: StackViewProps) {
   const hasStreamingCell = cells?.some(
     (cell) => cell.status === 'streaming' || cell.status === 'pending'
   )
+
+  // Build conversation history from cells
+  const conversationHistory = useMemo(() => {
+    if (!cells) return []
+    return cells
+      .filter(cell => cell.type === 'prompt' || cell.type === 'response')
+      .map(cell => ({
+        role: cell.type === 'prompt' ? 'user' as const : 'assistant' as const,
+        content: cell.content
+      }))
+  }, [cells])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -67,6 +79,7 @@ export function StackView({ stackId, stackName, cellCount }: StackViewProps) {
         prompt: promptText,
         stackId,
         model: 'gpt-4o-mini',
+        conversationHistory,
       }).catch((error) => {
         console.error('Generation failed:', error)
       })
@@ -99,7 +112,7 @@ export function StackView({ stackId, stackName, cellCount }: StackViewProps) {
 
       {/* Input Area */}
       <Card className="p-4 flex-shrink-0">
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form ref={formRef} onSubmit={handleSubmit} className="space-y-4">
           <Textarea
             ref={textareaRef}
             value={input}
@@ -119,7 +132,7 @@ export function StackView({ stackId, stackName, cellCount }: StackViewProps) {
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault()
-                // handleSubmit(e as React.FormEvent)
+                formRef.current?.requestSubmit()
               }
             }}
           />
