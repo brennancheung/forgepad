@@ -107,6 +107,8 @@ If you've ever lost track of context in a long AI conversation, wished you could
 
 This experiment is for those who understand that new paradigms require new ways of thinking. Just as mathematicians master notation to manipulate abstract concepts, or musicians internalize scales to improvise freely, mastering these new interaction patterns opens up possibilities for orchestrating AI capabilities that simpler interfaces can't provide. We're building for pioneers who know that the most powerful tools often require developing new mental models—and who find that process exhilarating rather than daunting.
 
+Remember the first time you saw a spreadsheet? Just a grid of empty boxes—no instructions, no obvious purpose. Yet once you grasped that each cell could hold data or formulas that reference other cells, entire worlds opened up. Financial models, project plans, data analysis—all from those "confusing" empty boxes. The most transformative tools often appear incomprehensible at first, until the moment they click.
+
 ## The Exploration Lab
 
 This is an active research project investigating new interaction paradigms for AI systems. We test hypotheses through implementation and measure success through user workflows that weren't possible before.
