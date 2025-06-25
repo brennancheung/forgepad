@@ -123,7 +123,7 @@ Current research questions:
 
 ## Join the Exploration
 
-- Read our [vision documents](./docs/vision/) to understand the philosophy
+- Read our [vision documents](./docs/vision/index.md) to understand the philosophy
 - Explore the codebase and experiment with new interaction patterns
 - Share what you discover
 
