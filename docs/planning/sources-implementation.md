@@ -12,8 +12,11 @@ This document outlines the phased implementation of the Sources feature for Forg
 Add sources table:
 ```typescript
 sources: defineTable({
-  workspaceId: v.id('workspaces'),
-  userId: v.id('users'),
+  // Scope fields
+  userId: v.id('users'), // Always required - owner
+  workspaceId: v.optional(v.id('workspaces')), // Workspace scope
+  stackId: v.optional(v.id('stacks')), // Stack scope
+  
   name: v.string(),
   description: v.optional(v.string()),
   type: v.union(
@@ -26,9 +29,12 @@ sources: defineTable({
   createdAt: v.number(),
   updatedAt: v.number(),
 })
-.index('by_workspace', ['workspaceId'])
 .index('by_user', ['userId'])
+.index('by_workspace', ['workspaceId'])
+.index('by_stack', ['stackId'])
+.index('by_user_name', ['userId', 'name'])
 .index('by_workspace_name', ['workspaceId', 'name'])
+.index('by_stack_name', ['stackId', 'name'])
 ```
 
 ### 1.2 Create Validation Helpers
@@ -38,33 +44,43 @@ sources: defineTable({
 export function validateSourceValue(type: SourceType, value: any): boolean
 export function sanitizeSourceValue(type: SourceType, value: any): any
 export function getSourceValueError(type: SourceType, value: any): string | null
+export function validateSourceScope(userId: Id<'users'>, workspaceId?: Id<'workspaces'>, stackId?: Id<'stacks'>): boolean
+export function validateSourceName(name: string, scope: SourceScope): boolean
 ```
 
 ### 1.3 Implement CRUD Functions
 **Files**: `/convex/sources/mutations.ts` and `/convex/sources/queries.ts`
 
 Mutations:
-- `createSource` - Create new source with validation
+- `createSource` - Create new source with scope validation
 - `updateSource` - Update existing source
 - `deleteSource` - Delete source (check for references)
-- `duplicateSource` - Create copy with new name
+- `duplicateSource` - Create copy with new name/scope
+- `moveSource` - Change source scope (user->workspace, etc)
 
 Queries:
 - `getSource` - Get single source by ID
-- `getSourceByName` - Get source by workspace + name
-- `listSources` - List sources with filtering/sorting
-- `searchSources` - Full-text search sources
+- `getSourceByName` - Get source by name with scope resolution
+- `listSources` - List sources accessible in current context
+- `listUserSources` - List user-level sources
+- `listWorkspaceSources` - List workspace-level sources
+- `listStackSources` - List stack-level sources
+- `searchSources` - Full-text search across accessible sources
 - `getSourceReferences` - Find cells referencing a source
+- `resolveSourceName` - Resolve name following scope hierarchy
 
 ### 1.4 Add Source Types
 **File**: `/convex/types/sources.ts`
 
 ```typescript
 export type SourceType = 'string' | 'array' | 'json'
+export type SourceScope = 'user' | 'workspace' | 'stack'
+
 export interface Source {
   _id: Id<'sources'>
-  workspaceId: Id<'workspaces'>
   userId: Id<'users'>
+  workspaceId?: Id<'workspaces'>
+  stackId?: Id<'stacks'>
   name: string
   description?: string
   type: SourceType
@@ -72,6 +88,12 @@ export interface Source {
   tags?: string[]
   createdAt: number
   updatedAt: number
+}
+
+export function getSourceScope(source: Source): SourceScope {
+  if (source.stackId) return 'stack'
+  if (source.workspaceId) return 'workspace'
+  return 'user'
 }
 ```
 
@@ -82,22 +104,26 @@ export interface Source {
 
 Features:
 - Grid/list view toggle
+- Scope tabs (All, User, Workspace, Stack)
 - Type filter buttons
 - Search input
-- Sort options (name, date, type)
-- Empty state
+- Sort options (name, date, type, scope)
+- Empty state per scope
 - Loading state
+- Scope indicators on each source
 
 ### 2.2 Source Card Component
 **File**: `/src/components/sources/SourceCard.tsx`
 
 Display:
 - Source name and type icon
+- Scope badge (User/Workspace/Stack)
 - Description preview
 - Value preview (truncated)
 - Tags
 - Last updated timestamp
-- Edit/delete actions
+- Edit/delete/move actions
+- Usage count indicator
 
 ### 2.3 Source Type Icons
 **File**: `/src/components/sources/SourceTypeIcon.tsx`
@@ -122,12 +148,14 @@ Layout:
 **File**: `/src/components/sources/SourceEditorModal.tsx`
 
 Common features:
-- Name input with validation
+- Scope selector (User/Workspace/Stack)
+- Name input with scope-aware validation
 - Description textarea
 - Type selector (for new sources)
 - Tags input
 - Save/cancel buttons
 - Delete confirmation
+- Move to different scope option
 
 ### 3.2 String Source Editor
 **File**: `/src/components/sources/editors/StringEditor.tsx`
@@ -178,8 +206,11 @@ Functions:
 - `validateSourceReference(ref: SourceReference): boolean`
 
 Reference patterns:
-- `{{source:name}}` - By name
+- `{{source:name}}` - By name (scope resolution)
 - `{{source:#id}}` - By ID
+- `{{user:name}}` - User-level source
+- `{{workspace:name}}` - Workspace-level source
+- `{{stack:name}}` - Stack-level source
 - `{{source:name[0]}}` - Array index
 - `{{source:name.prop}}` - JSON property
 
@@ -187,9 +218,16 @@ Reference patterns:
 **File**: `/src/lib/sources/resolution.ts`
 
 Functions:
+- `resolveSourceByName(name: string, context: ResolutionContext): Source | null`
 - `resolveSourceValue(source: Source, path?: string): any`
 - `resolveArrayIndex(array: any[], index: number): any`
 - `resolveJsonPath(json: any, path: string): any`
+- `getResolutionOrder(context: ResolutionContext): SourceScope[]`
+
+ResolutionContext includes:
+- userId: Current user
+- workspaceId?: Current workspace
+- stackId?: Current stack
 
 ### 4.3 Integration with Cells
 **File**: `/src/lib/cells/preprocessing.ts`
@@ -227,10 +265,12 @@ Update keyboard mappings:
 **File**: `/src/components/editor/SourceAutocomplete.tsx`
 
 Features:
-- Trigger on `{{source:`
-- Show matching sources
+- Trigger on `{{source:`, `{{user:`, `{{workspace:`, `{{stack:`
+- Show matching sources with scope indicators
+- Group by scope in dropdown
 - Preview on hover
 - Tab/enter to complete
+- Show resolution order hint
 
 ## Phase 6: Advanced Features
 
@@ -256,10 +296,12 @@ Pre-built templates:
 **File**: `/src/components/sources/SourceAnalytics.tsx`
 
 Track and display:
-- Usage frequency
+- Usage frequency by scope
 - Last used date
 - Referenced by N cells
-- Unused sources
+- Unused sources by scope
+- Scope distribution chart
+- Name collision warnings
 
 ### 6.4 Batch Operations
 **File**: `/src/components/sources/BatchOperations.tsx`
@@ -310,23 +352,30 @@ Operations:
 - Use Convex real-time queries for source lists
 - Local state only for editor modals
 - Optimistic updates for better UX
+- Context-aware source loading based on current scope
 
 ### Validation Strategy
 - Client-side validation for immediate feedback
 - Server-side validation as source of truth
 - Type-specific validation rules
+- Scope-aware name uniqueness validation
+- Stack scope requires workspace scope validation
 
 ### Performance Considerations
-- Index sources by workspace and name
+- Index sources by all scope combinations
 - Cache interpolated values per render
+- Lazy load sources by scope
 - Debounce source search/filter
 - Paginate large source lists
+- Efficient scope resolution with memoization
 
 ### Error Handling
 - Graceful fallbacks for missing sources
 - Clear error messages for invalid references
+- Scope conflict resolution UI
 - Validation errors in editors
 - Network error recovery
+- Clear messaging for scope-related errors
 
 ## Success Metrics
 

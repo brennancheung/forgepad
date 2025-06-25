@@ -30,8 +30,11 @@ Sources represent reusable data inputs that can be referenced and interpolated w
 
 ```typescript
 sources: defineTable({
-  workspaceId: v.id('workspaces'),
-  userId: v.id('users'),
+  // Scope fields - userId is required, others optional
+  userId: v.id('users'),  // Always required - owner of the source
+  workspaceId: v.optional(v.id('workspaces')),  // For workspace-scoped sources
+  stackId: v.optional(v.id('stacks')),  // For stack-scoped sources
+  
   name: v.string(),
   description: v.optional(v.string()),
   type: v.union(
@@ -48,34 +51,65 @@ sources: defineTable({
   createdAt: v.number(),
   updatedAt: v.number(),
 })
-.index('by_workspace', ['workspaceId'])
 .index('by_user', ['userId'])
+.index('by_workspace', ['workspaceId'])
+.index('by_stack', ['stackId'])
+.index('by_user_name', ['userId', 'name'])
 .index('by_workspace_name', ['workspaceId', 'name'])
+.index('by_stack_name', ['stackId', 'name'])
 ```
+
+## Source Scopes
+
+Sources can exist at three levels, with cascading visibility:
+
+1. **User-level sources**: Available across all workspaces and stacks for the user
+2. **Workspace-level sources**: Available within a specific workspace and its stacks
+3. **Stack-level sources**: Available only within a specific stack
+
+### Scope Rules
+- `userId` is always required (identifies the owner)
+- If `stackId` is set, `workspaceId` must also be set (stacks exist within workspaces)
+- Names must be unique within their scope level
+
+### Resolution Order
+When resolving `{{source:name}}`, the system searches in order:
+1. Stack-level sources (if in a stack context)
+2. Workspace-level sources (if in a workspace context)
+3. User-level sources
+
+This allows for scope-specific overrides while maintaining access to broader sources.
 
 ## Source Interpolation
 
 Sources can be referenced in prompts and cells using:
-- `{{source:name}}` - Reference by name within workspace
-- `{{source:#id}}` - Reference by source ID
+- `{{source:name}}` - Reference by name (follows resolution order)
+- `{{source:#id}}` - Reference by source ID (explicit)
+- `{{user:name}}` - Explicitly reference user-level source
+- `{{workspace:name}}` - Explicitly reference workspace-level source
+- `{{stack:name}}` - Explicitly reference stack-level source
 - For arrays: `{{source:name[0]}}` - Access specific index
 - For JSON: `{{source:name.property}}` - Access nested properties
 
 ## CRUD Interface Requirements
 
 ### List Sources
-- Filter by workspace
+- Filter by scope (user/workspace/stack)
+- Show sources from all accessible scopes
 - Search by name/description
 - Filter by type
 - Sort by created/updated date
+- Visual indicators for scope level
 
 ### Create Source
-- Name validation (unique per workspace)
+- Scope selector (user/workspace/stack)
+- Name validation (unique within selected scope)
 - Type-specific validation:
   - String: Plain text editor
   - Array: List editor with add/remove/reorder
   - JSON: JSON editor with validation
 - Preview of formatted value
+- Clear indication of where source will be available
 
 ### Update Source
 - Rename (with reference update warnings)
@@ -101,16 +135,19 @@ Sources can be referenced in prompts and cells using:
 - Sources become inputs to LLM operations
 - Transform operations can create new sources
 - Sources can be pushed directly to stack
+- Stack-level sources for operation-specific data
 
 ### With Prompts
-- Prompt templates can reference sources
+- Prompt templates can reference sources at any scope
 - Dynamic prompt generation from source arrays
 - Context aggregation from multiple sources
+- Scope-aware interpolation
 
 ### With Keyboard System
 - Quick source insertion commands
-- Source navigation shortcuts
+- Source navigation shortcuts with scope indicators
 - Inline source preview on hover
+- Scope-specific creation shortcuts
 
 ## Open Questions
 
@@ -154,8 +191,17 @@ no
 
 ## Example Use Cases
 
-1. **API Keys/Configs**: Store as JSON sources for consistent configuration
-2. **Prompt Templates**: Reusable prompt snippets as string sources
-3. **Test Data**: Arrays of test cases for batch operations
-4. **Common Contexts**: Frequently used context snippets
-5. **Variable Lists**: Arrays for iteration in stack operations
+### User-Level Sources
+1. **API Keys**: Personal API keys available across all workspaces
+2. **Personal Templates**: Commonly used prompt patterns
+3. **User Preferences**: JSON configs for personal settings
+
+### Workspace-Level Sources
+1. **Project Context**: Shared context for all stacks in a project
+2. **Team Templates**: Workspace-specific prompt templates
+3. **Test Data Sets**: Shared test data for the workspace
+
+### Stack-Level Sources
+1. **Operation Variables**: Temporary values for stack operations
+2. **Iteration Data**: Arrays specific to current processing
+3. **Local Configs**: Stack-specific configurations
