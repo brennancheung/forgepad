@@ -10,11 +10,11 @@ import { Plus, Layers } from 'lucide-react'
 import { StackTabs } from '@/components/stack/StackTabs'
 
 interface PageProps {
-  params: Promise<{ id: string }>
+  params: Promise<{ workspaceId: string }>
 }
 
 export default function WorkspacePage({ params }: PageProps) {
-  const { id } = use(params)
+  const { workspaceId: id } = use(params)
   const workspaceId = id as Id<'workspaces'>
   
   const workspace = useQuery(api.workspaces.get, { id: workspaceId })

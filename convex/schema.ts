@@ -133,4 +133,29 @@ export default defineSchema({
   })
     .index('by_user', ['userId'])
     .index('by_user_name', ['userId', 'name']),
+
+  sources: defineTable({
+    // Scope fields
+    userId: v.id('users'), // Always required - owner
+    workspaceId: v.optional(v.id('workspaces')), // Workspace scope
+    stackId: v.optional(v.id('stacks')), // Stack scope
+    
+    name: v.string(),
+    description: v.optional(v.string()),
+    type: v.union(
+      v.literal('string'),
+      v.literal('array'),
+      v.literal('json'),
+    ),
+    value: v.any(), // Runtime validation based on type
+    tags: v.optional(v.array(v.string())),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index('by_user', ['userId'])
+    .index('by_workspace', ['workspaceId'])
+    .index('by_stack', ['stackId'])
+    .index('by_user_name', ['userId', 'name'])
+    .index('by_workspace_name', ['workspaceId', 'name'])
+    .index('by_stack_name', ['stackId', 'name']),
 })

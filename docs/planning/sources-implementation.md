@@ -97,35 +97,52 @@ export function getSourceScope(source: Source): SourceScope {
 }
 ```
 
-## Phase 2: Basic UI Components
+## Phase 2: Widget Components
 
-### 2.1 Source List Component
-**File**: `/src/components/sources/SourceList.tsx`
+### 2.1 Source List Widget
+**File**: `/src/components/sources/widgets/SourceListWidget.tsx`
 
 Features:
-- Grid/list view toggle
-- Scope tabs (All, User, Workspace, Stack)
+- Embeddable component (not a page)
+- Compact list/grid view toggle
+- Scope filter badges (All, User, Workspace, Stack)
 - Type filter buttons
-- Search input
-- Sort options (name, date, type, scope)
-- Empty state per scope
-- Loading state
+- Inline search input
+- Sort dropdown (name, date, type, scope)
+- Empty state per scope with quick-add
+- Loading skeleton
 - Scope indicators on each source
+- Keyboard navigation support
+- Auto-adapts to container size
 
-### 2.2 Source Card Component
+### 2.2 Source Quick Add Widget
+**File**: `/src/components/sources/widgets/SourceQuickAddWidget.tsx`
+
+Features:
+- Minimal floating form
+- Auto-detect scope from context
+- Name input with live validation
+- Type selector
+- Quick value input
+- Save & Continue option
+- Escape to dismiss
+- Programmatically invokable
+
+### 2.3 Source Card Component
 **File**: `/src/components/sources/SourceCard.tsx`
 
 Display:
 - Source name and type icon
-- Scope badge (User/Workspace/Stack)
+- Scope badge (U/W/S)
 - Description preview
 - Value preview (truncated)
 - Tags
 - Last updated timestamp
-- Edit/delete/move actions
+- Inline actions (edit/delete/duplicate)
 - Usage count indicator
+- Hover preview
 
-### 2.3 Source Type Icons
+### 2.4 Source Type Icons
 **File**: `/src/components/sources/SourceTypeIcon.tsx`
 
 Icons for:
@@ -133,22 +150,22 @@ Icons for:
 - Array (list icon)
 - JSON (code/braces icon)
 
-### 2.4 Basic Source Manager Page
-**File**: `/src/app/(authenticated)/workspace/[workspaceId]/sources/page.tsx`
+### 2.5 Widget Container Components
+**File**: `/src/components/sources/containers/`
 
-Layout:
-- Header with "Sources" title and create button
-- Search/filter bar
-- Source list/grid
-- Integration with workspace layout
+- `SourceSidebarPanel.tsx` - Workspace sidebar integration
+- `SourceModalWrapper.tsx` - Modal container for widgets
+- `SourceFloatingPanel.tsx` - Floating/dropdown container
+- `SourceInlineExpander.tsx` - Inline expansion container
 
 ## Phase 3: Source Editors
 
-### 3.1 Source Editor Modal
-**File**: `/src/components/sources/SourceEditorModal.tsx`
+### 3.1 Source Editor Widget
+**File**: `/src/components/sources/widgets/SourceEditorWidget.tsx`
 
 Common features:
-- Scope selector (User/Workspace/Stack)
+- Embeddable in modal or panel
+- Scope selector/indicator
 - Name input with scope-aware validation
 - Description textarea
 - Type selector (for new sources)
@@ -156,6 +173,8 @@ Common features:
 - Save/cancel buttons
 - Delete confirmation
 - Move to different scope option
+- Keyboard shortcuts (Cmd+S to save)
+- Can be used inline or in overlay
 
 ### 3.2 String Source Editor
 **File**: `/src/components/sources/editors/StringEditor.tsx`
@@ -194,6 +213,18 @@ Render formatted preview based on type:
 - String: First N lines with "show more"
 - Array: List items with count
 - JSON: Pretty-printed with syntax highlighting
+
+### 3.6 Source Picker Widget
+**File**: `/src/components/sources/widgets/SourcePickerWidget.tsx`
+
+Features:
+- Searchable combobox UI
+- Grouped by scope with hierarchy
+- Type indicators and previews
+- Recent sources section
+- "Create new" option
+- Returns source reference syntax
+- Keyboard navigable
 
 ## Phase 4: Source Interpolation System
 
@@ -250,16 +281,20 @@ Functions:
 **File**: `/src/lib/keyboard/commands/sources.ts`
 
 Commands:
-- `:source list` - Open source manager
-- `:source create [type]` - Create new source
-- `:source edit [name]` - Edit existing source
-- `:source insert [name]` - Insert source reference at cursor
+- `:source list` - Toggle source list widget
+- `:source create [type]` - Open quick add widget
+- `:source edit [name]` - Open editor widget
+- `:source insert [name]` - Open picker widget
+- `:source add-to-scope [name] [scope]` - Programmatic add
+- `:source remove-from-scope [name] [scope]` - Programmatic remove
 
 ### 5.2 Normal Mode Shortcuts
 Update keyboard mappings:
-- `gs` - Go to sources
-- `@s` - Quick source insert menu
+- `gs` - Toggle source sidebar
+- `@s` - Open source picker widget
 - `]s` / `[s` - Next/previous source reference
+- `cmd+shift+s` - Quick add source
+- `cmd+alt+s` - Source picker
 
 ### 5.3 Source Completion
 **File**: `/src/components/editor/SourceAutocomplete.tsx`
@@ -271,6 +306,17 @@ Features:
 - Preview on hover
 - Tab/enter to complete
 - Show resolution order hint
+
+### 5.4 Programmatic Widget API
+**File**: `/src/lib/sources/widget-api.ts`
+
+API functions:
+- `openSourcePicker(options)` - Open picker programmatically
+- `quickAddSource(type, scope)` - Open quick add
+- `editSource(sourceId)` - Open editor
+- `addToScope(sourceIds, scope)` - Batch add to scope
+- `removeFromScope(sourceIds, scope)` - Batch remove
+- `toggleSourceSidebar()` - Show/hide sidebar
 
 ## Phase 6: Advanced Features
 
@@ -341,16 +387,25 @@ Operations:
 ## Implementation Order
 
 1. **Week 1**: Phase 1 (Database & CRUD)
-2. **Week 2**: Phase 2 (Basic UI) + Phase 3 (Editors)
+2. **Week 2**: Phase 2 (Widget Components) + Phase 3 (Editors)
 3. **Week 3**: Phase 4 (Interpolation)
-4. **Week 4**: Phase 5 (Keyboard) + Phase 6 (Advanced)
+4. **Week 4**: Phase 5 (Keyboard & Programmatic API) + Phase 6 (Advanced)
 5. **Week 5**: Phase 7 (Testing & Polish)
+
+### Widget Implementation Priority
+1. **Core Widgets**: SourceListWidget, SourceQuickAddWidget
+2. **Editor Widget**: SourceEditorWidget with type editors
+3. **Utility Widgets**: SourcePickerWidget, ContextMenuWidget
+4. **Integration**: Sidebar panels, modal wrappers
+5. **Programmatic API**: Widget control functions
 
 ## Technical Decisions
 
 ### State Management
-- Use Convex real-time queries for source lists
-- Local state only for editor modals
+- Use Convex real-time queries for source data
+- Local state for widget UI interactions
+- Widget-specific context providers
+- Global widget manager for coordination
 - Optimistic updates for better UX
 - Context-aware source loading based on current scope
 
@@ -373,16 +428,21 @@ Operations:
 - Graceful fallbacks for missing sources
 - Clear error messages for invalid references
 - Scope conflict resolution UI
-- Validation errors in editors
+- Validation errors in widget editors
 - Network error recovery
 - Clear messaging for scope-related errors
+- Widget-level error boundaries
+- Toast notifications for async operations
 
 ## Success Metrics
 
-1. Sources can be created, edited, and deleted
+1. Sources can be created, edited, and deleted via widgets
 2. Sources can be referenced in cells and prompts
 3. All source types (string, array, JSON) work correctly
-4. Keyboard shortcuts improve workflow
-5. Performance remains good with 100+ sources
-6. No data loss or corruption
-7. Clear error messages for all failure cases
+4. Widgets are embeddable in multiple contexts
+5. Keyboard shortcuts and programmatic API work seamlessly
+6. Performance remains good with 100+ sources
+7. No data loss or corruption
+8. Clear error messages for all failure cases
+9. Widget components are reusable and maintainable
+10. User can manage sources without leaving their current context

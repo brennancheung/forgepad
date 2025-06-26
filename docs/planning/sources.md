@@ -84,24 +84,24 @@ This allows for scope-specific overrides while maintaining access to broader sou
 
 Sources can be referenced in prompts and cells using:
 - `{{source:name}}` - Reference by name (follows resolution order)
-- `{{source:#id}}` - Reference by source ID (explicit)
 - `{{user:name}}` - Explicitly reference user-level source
 - `{{workspace:name}}` - Explicitly reference workspace-level source
 - `{{stack:name}}` - Explicitly reference stack-level source
-- For arrays: `{{source:name[0]}}` - Access specific index
-- For JSON: `{{source:name.property}}` - Access nested properties
 
 ## CRUD Interface Requirements
 
-### List Sources
+**Important**: Source management will be implemented as embeddable widget-style components, not full pages. This enables flexible integration at user, workspace, and stack scopes with both UI and programmatic access.
+
+### List Sources Widget
 - Filter by scope (user/workspace/stack)
 - Show sources from all accessible scopes
 - Search by name/description
 - Filter by type
 - Sort by created/updated date
 - Visual indicators for scope level
+- Embeddable in sidebars, panels, and modals
 
-### Create Source
+### Create Source Widget
 - Scope selector (user/workspace/stack)
 - Name validation (unique within selected scope)
 - Type-specific validation:
@@ -110,24 +110,33 @@ Sources can be referenced in prompts and cells using:
   - JSON: JSON editor with validation
 - Preview of formatted value
 - Clear indication of where source will be available
+- Quick-add mode for streamlined creation
 
-### Update Source
+### Update Source Widget
 - Rename (with reference update warnings)
 - Edit values with type-appropriate editor
 - Add/remove tags
 - Update description
+- Inline or modal editing modes
 
 ### Delete Source
 - Check for references in cells
 - Cascade or prevent deletion options
 - Soft delete for recovery
+- Batch operations support
 
-### UI Components Needed
-1. Source sidebar/panel in workspace view
-2. Source picker modal for prompt editing
-3. Source preview cards
-4. Inline source editor
-5. Reference usage tracker
+### Widget Components Needed
+1. SourceListWidget - Embeddable source list/grid
+2. SourceQuickAddWidget - Minimal creation interface
+3. SourceEditorWidget - Full editing capabilities
+4. SourcePickerWidget - Searchable source selector
+5. SourceContextMenuWidget - Action menu for sources
+
+### Programmatic Access
+- Hotkey triggers sources manager
+- Command interface for add/remove from scope
+
+See `sources-widgets.md` for detailed widget specifications.
 
 ## Integration Points
 

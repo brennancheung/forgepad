@@ -14,6 +14,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `pnpm test` - Run all tests
 - `pnpm test:watch` - Run tests in watch mode
 - `pnpm test:coverage` - Run tests with coverage report
+- `pnpm test:unit` - Run unit tests only
 
 ### Database
 - `convex dev` - Start Convex development server (DO NOT run this - it's non-terminating and user will run it manually)
@@ -43,6 +44,7 @@ Forgepad.ai implements an interactive, stack-based user experience inspired by R
 - `/src/lib/` - Utility functions and core logic
   - `keyboard/` - Comprehensive vim-like keyboard system
   - `rpn/` - RPN calculator operations
+  - `sources/` - Data source management and interpolation
   - `utils.ts` - Includes `cn()` for className merging
 - `/convex/` - Backend database schema and functions
 - `/docs/` - Architecture documentation and planning
@@ -64,6 +66,8 @@ Forgepad.ai implements an interactive, stack-based user experience inspired by R
 - **stacks**: Named stacks within workspaces containing computational stack array
 - **cells**: Individual stack items with type, content, status, and metadata
 - **operations**: Audit trail of all stack operations
+- **prompts**: Reusable prompt templates
+- **sources**: Data sources with hierarchical scope (user/workspace/stack) and interpolation support
 
 ### Key Implementation Notes
 
@@ -102,6 +106,12 @@ Forgepad.ai implements an interactive, stack-based user experience inspired by R
    - Schema is fully typed with validators
    - Real-time updates happen automatically
    - No need for manual cache invalidation
+
+5. Sources and interpolation:
+   - Sources provide hierarchical data scoping (user → workspace → stack)
+   - Use interpolation syntax: `{{#position}}` for stack references, `{{@name}}` for named references
+   - Sources can contain markdown, data, or computational values
+   - Check `/src/lib/sources/` for interpolation logic
 
 ### Environment Variables
 

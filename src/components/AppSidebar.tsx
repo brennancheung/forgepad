@@ -11,7 +11,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@/components/ui/sidebar'
-import { Home, FileText } from 'lucide-react'
+import { Home, FileText, Beaker } from 'lucide-react'
 import Link from 'next/link'
 import { UserNav } from './UserNav'
 import { WorkspaceSidebarSection } from './workspace/WorkspaceSidebarSection'
@@ -29,6 +29,14 @@ const menuItems = [
   },
 ]
 
+const experimentItems = [
+  {
+    title: 'Combinatoric Chat',
+    icon: Beaker,
+    href: '/experiments/combinatoric-chat',
+  },
+]
+
 export function AppSidebar() {
   return (
     <Sidebar>
@@ -38,6 +46,28 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {menuItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild>
+                    <Link href={item.href}>
+                      <item.icon className="h-4 w-4" />
+                      <span>{item.title}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+        
+        <div className="mx-2 my-2">
+          <div className="h-px bg-sidebar-border" />
+        </div>
+        
+        <SidebarGroup>
+          <SidebarGroupLabel>Experiments</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {experimentItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
                     <Link href={item.href}>
