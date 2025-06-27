@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useQuery, useMutation } from 'convex/react'
 import { api } from '@convex/_generated/api'
 import { StackView } from '@/components/stack/StackView'
+import { SourcesPanelDictionary } from '@/components/SourcesPanelDictionary'
 
 const WORKSPACE_NAME = 'Combinatoric Chat'
 const STACK_NAME = 'Chat Stack'
@@ -80,12 +81,22 @@ export default function CombinatricChatPage() {
   }
 
   return (
-    <div className="h-[calc(100vh-8rem)]">
-      <StackView 
-        stackId={currentStack._id} 
-        stackName={STACK_NAME}
-        cellCount={currentStack.cellCount}
-      />
+    <div className="h-[calc(100vh-8rem)] flex gap-4">
+      <div className="flex-1">
+        <StackView 
+          stackId={currentStack._id} 
+          stackName={STACK_NAME}
+          cellCount={currentStack.cellCount}
+        />
+      </div>
+      <div className="w-96 border-l pl-4">
+        <SourcesPanelDictionary
+          scope="stack"
+          workspaceId={existingWorkspace._id}
+          stackId={currentStack._id}
+          className="h-full overflow-auto"
+        />
+      </div>
     </div>
   )
 }
