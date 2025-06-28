@@ -3,21 +3,23 @@
 import { ConvexHttpClient } from 'convex/browser'
 import { api } from '@convex/_generated/api'
 import { streamText, generateObject } from 'ai'
-import { createOpenAI } from '@ai-sdk/openai'
 import { z } from 'zod'
 import { Id } from '@convex/_generated/dataModel'
 
+/*
+import { createOpenAI } from '@ai-sdk/openai'
 // Create OpenAI provider with explicit API key
 const openai = createOpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 })
+  */
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!)
 
 export async function generateWithAI({
   prompt,
   stackId,
-  model = 'gpt-4o',
+  model = 'gpt-4o-mini',
   temperature = 0.7,
   maxTokens = 2000,
   conversationHistory = [],
@@ -59,7 +61,7 @@ export async function generateWithAI({
 
     // Start streaming with AI SDK v5
     const result = streamText({
-      model: openai(model),
+      model: model,
       messages,
       temperature,
     })
@@ -164,7 +166,7 @@ export async function generateStructuredData({
     })
 
     const result = await generateObject({
-      model: openai(model),
+      model: model,
       prompt,
       schema,
     })

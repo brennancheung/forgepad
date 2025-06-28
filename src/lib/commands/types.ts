@@ -29,5 +29,6 @@ export interface CommandContext {
     openCreateSource: () => void
     openSourceSearch: () => void
     openSourcePicker: () => void
+    setTheme?: (theme: string) => void
   }
 }

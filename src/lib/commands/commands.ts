@@ -127,14 +127,33 @@ export function getCommands(context: CommandContext): Command[] {
       },
     },
     {
-      id: 'toggle-dark-mode',
-      title: 'Toggle Dark Mode',
+      id: 'set-theme-light',
+      title: 'Set Light Theme',
+      category: 'View',
+      icon: 'sun',
+      keywords: ['light', 'theme', 'mode', 'bright'],
+      action: () => {
+        actions?.setTheme?.('light')
+      },
+    },
+    {
+      id: 'set-theme-dark',
+      title: 'Set Dark Theme',
       category: 'View',
       icon: 'moon',
-      keywords: ['dark', 'light', 'theme', 'mode', 'toggle'],
+      keywords: ['dark', 'theme', 'mode', 'night'],
       action: () => {
-        // TODO: Toggle dark mode
-        console.log('Toggle dark mode')
+        actions?.setTheme?.('dark')
+      },
+    },
+    {
+      id: 'set-theme-system',
+      title: 'Use System Theme',
+      category: 'View',
+      icon: 'settings',
+      keywords: ['system', 'theme', 'mode', 'auto', 'automatic'],
+      action: () => {
+        actions?.setTheme?.('system')
       },
     },
     

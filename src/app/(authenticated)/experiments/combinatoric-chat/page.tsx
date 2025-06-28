@@ -5,6 +5,7 @@ import { useQuery, useMutation } from 'convex/react'
 import { api } from '@convex/_generated/api'
 import { StackView } from '@/components/stack/StackView'
 import { SourcesPanelDictionary } from '@/components/SourcesPanelDictionary'
+import { CombinationsDisplay } from '@/components/CombinationsDisplay'
 
 const WORKSPACE_NAME = 'Combinatoric Chat'
 const STACK_NAME = 'Chat Stack'
@@ -63,6 +64,16 @@ export default function CombinatricChatPage() {
 
   // Determine the stack to use
   const currentStack = stacks?.[0]
+  
+  // Get sources for combinations
+  const sources = useQuery(
+    api.sources.queries.listSources,
+    currentStack ? {
+      scope: 'stack',
+      workspaceId: existingWorkspace?._id,
+      stackId: currentStack._id,
+    } : 'skip'
+  )
 
   if (!currentUser) {
     return (
@@ -89,11 +100,17 @@ export default function CombinatricChatPage() {
           cellCount={currentStack.cellCount}
         />
       </div>
-      <div className="w-96 border-l pl-4">
+      <div className="w-[500px] border-l pl-4">
         <SourcesPanelDictionary
           scope="stack"
           workspaceId={existingWorkspace._id}
           stackId={currentStack._id}
+          className="h-full overflow-auto"
+        />
+      </div>
+      <div className="w-[400px] border-l pl-4">
+        <CombinationsDisplay
+          sources={sources?.map(s => ({ name: s.name, value: s.value })) || []}
           className="h-full overflow-auto"
         />
       </div>

@@ -9,12 +9,14 @@ import { api } from '@convex/_generated/api'
 import { useRouter } from 'next/navigation'
 import { Id } from '@convex/_generated/dataModel'
 import { toast } from 'sonner'
+import { useTheme } from 'next-themes'
 
 interface CommandPaletteContextType {
   openCreateWorkspace: () => void
   openCreateSource: () => void
   openSourceSearch: () => void
   openSourcePicker: () => void
+  setTheme?: (theme: string) => void
 }
 
 const CommandPaletteContext = createContext<CommandPaletteContextType | undefined>(undefined)
@@ -44,6 +46,7 @@ export function CommandPaletteProvider({
 }: CommandPaletteProviderProps) {
   const router = useRouter()
   const createWorkspace = useMutation(api.workspaces.create)
+  const { setTheme } = useTheme()
   
   // Modal states
   const [createWorkspaceOpen, setCreateWorkspaceOpen] = useState(false)
@@ -65,6 +68,7 @@ export function CommandPaletteProvider({
       setSourcesModalMode('picker')
       setSourcesModalOpen(true)
     },
+    setTheme,
   }
   
   // Handle workspace creation

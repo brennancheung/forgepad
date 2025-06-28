@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { InlineJSONEditor } from '@/components/common/InlineJSONEditor'
 import { Plus, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useKeyboard } from '@/lib/keyboard'
 
 interface SourcesPanelDictionaryProps {
   scope: 'stack' | 'workspace' | 'user'
@@ -21,8 +22,10 @@ export function SourcesPanelDictionary({ scope, workspaceId, stackId, className 
   const [editingValue, setEditingValue] = useState<string>('')
   const [isAdding, setIsAdding] = useState(false)
   const [newName, setNewName] = useState('')
-  const [newValue, setNewValue] = useState('{}')
+  const [newValue, setNewValue] = useState('""')
   const [newValueValid, setNewValueValid] = useState(true)
+  
+  const { setMode } = useKeyboard()
 
   // Query sources based on scope
   const sources = useQuery(api.sources.queries.listSources, {
@@ -89,7 +92,7 @@ export function SourcesPanelDictionary({ scope, workspaceId, stackId, className 
 
       setIsAdding(false)
       setNewName('')
-      setNewValue('{}')
+      setNewValue('""')
       setNewValueValid(true)
     } catch (error) {
       console.error('Failed to create source:', error)
@@ -145,7 +148,7 @@ export function SourcesPanelDictionary({ scope, workspaceId, stackId, className 
         {sources.map((source) => (
           <div
             key={source._id}
-            className="group grid grid-cols-[200px_1fr_auto] gap-2 p-2 hover:bg-accent/50 rounded"
+            className="group grid grid-cols-[minmax(120px,0.25fr)_1fr_auto] gap-2 p-2 hover:bg-accent/50 rounded"
           >
             <div className="font-mono text-sm truncate" title={source.name}>
               {source.name}
@@ -187,7 +190,7 @@ export function SourcesPanelDictionary({ scope, workspaceId, stackId, className 
         ))}
 
         {isAdding && (
-          <div className="grid grid-cols-[200px_1fr] gap-2 p-2 bg-accent/50 rounded">
+          <div className="grid grid-cols-[minmax(120px,0.25fr)_1fr] gap-2 p-2 bg-accent/50 rounded">
             <input
               type="text"
               value={newName}
@@ -198,13 +201,16 @@ export function SourcesPanelDictionary({ scope, workspaceId, stackId, className 
                 "bg-background border border-input",
                 "focus:outline-none focus:ring-2 focus:ring-ring"
               )}
+              onFocus={() => setMode('insert')}
+              onBlur={() => setMode('normal')}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && newName && newValueValid) {
                   handleAdd()
                 } else if (e.key === 'Escape') {
                   setIsAdding(false)
                   setNewName('')
-                  setNewValue('{}')
+                  setNewValue('""')
+                  setMode('normal')
                 }
               }}
               autoFocus
