@@ -13,6 +13,8 @@ const initialState: InternalKeyboardState = {
   visualSelection: undefined,
   // Register system
   registers: new Map(),
+  // Passthrough system
+  passthroughRequests: new Set(),
 }
 
 // Resolve a key sequence in the keymap

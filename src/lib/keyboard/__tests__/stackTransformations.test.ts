@@ -21,6 +21,7 @@ describe('Stack Transformations', () => {
     stackDepth: 10,
     visualSelection: undefined,
     registers: new Map(),
+    passthroughRequests: new Set(),
     ...overrides
   })
 

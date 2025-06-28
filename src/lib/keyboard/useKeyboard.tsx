@@ -73,5 +73,7 @@ export function useKeyboard(options?: UseKeyboardOptions): UseKeyboardReturn {
     hasFocus,
     requestFocus,
     releaseFocus,
+    requestPassthrough: context.requestPassthrough,
+    releasePassthrough: context.releasePassthrough,
   };
 }

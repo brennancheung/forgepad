@@ -45,6 +45,8 @@ export interface InternalKeyboardState {
     count?: number
     register?: string
   }
+  // Passthrough requests
+  passthroughRequests: Set<string>
 }
 
 // UI state - only what components need to render
@@ -144,4 +146,8 @@ export interface KeyboardContextValue {
   unregisterFocusHandler: (id: string) => void
   requestFocus: (id: string) => void
   releaseFocus: (id: string) => void
+  
+  // Passthrough management API
+  requestPassthrough: (id: string) => void
+  releasePassthrough: (id: string) => void
 }

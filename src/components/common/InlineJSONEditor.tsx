@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { cn } from '@/lib/utils'
+import { KeyboardTextarea } from '@/components/keyboard/KeyboardInput'
 
 interface InlineJSONEditorProps {
   value: string
@@ -84,7 +85,7 @@ export function InlineJSONEditor({
 
   return (
     <div className="relative">
-      <textarea
+      <KeyboardTextarea
         ref={textareaRef}
         value={value}
         onChange={handleChange}

@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { InlineJSONEditor } from '@/components/common/InlineJSONEditor'
 import { Plus, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { useKeyboard } from '@/lib/keyboard'
+import { KeyboardInput } from '@/components/keyboard/KeyboardInput'
 
 interface SourcesPanelDictionaryProps {
   scope: 'stack' | 'workspace' | 'user'
@@ -24,8 +24,6 @@ export function SourcesPanelDictionary({ scope, workspaceId, stackId, className 
   const [newName, setNewName] = useState('')
   const [newValue, setNewValue] = useState('""')
   const [newValueValid, setNewValueValid] = useState(true)
-  
-  const { setMode } = useKeyboard()
 
   // Query sources based on scope
   const sources = useQuery(api.sources.queries.listSources, {
@@ -191,7 +189,7 @@ export function SourcesPanelDictionary({ scope, workspaceId, stackId, className 
 
         {isAdding && (
           <div className="grid grid-cols-[minmax(120px,0.25fr)_1fr] gap-2 p-2 bg-accent/50 rounded">
-            <input
+            <KeyboardInput
               type="text"
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
@@ -201,8 +199,6 @@ export function SourcesPanelDictionary({ scope, workspaceId, stackId, className 
                 "bg-background border border-input",
                 "focus:outline-none focus:ring-2 focus:ring-ring"
               )}
-              onFocus={() => setMode('insert')}
-              onBlur={() => setMode('normal')}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && newName && newValueValid) {
                   handleAdd()
@@ -210,7 +206,6 @@ export function SourcesPanelDictionary({ scope, workspaceId, stackId, className 
                   setIsAdding(false)
                   setNewName('')
                   setNewValue('""')
-                  setMode('normal')
                 }
               }}
               autoFocus

@@ -15,7 +15,8 @@ describe('Workspace Transformations', () => {
     stackPosition: 5,
     stackDepth: 10,
     visualSelection: undefined,
-    registers: new Map()
+    registers: new Map(),
+    passthroughRequests: new Set()
   })
 
   describe('parseWorkspaceCommand', () => {

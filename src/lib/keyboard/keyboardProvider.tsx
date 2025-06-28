@@ -34,7 +34,10 @@ const KeyboardProviderComponent: React.FC<KeyboardProviderProps> = ({
   keymaps = defaultKeymaps 
 }) => {
   // All state in refs - no React state updates
-  const internalStateRef = useRef<InternalKeyboardState>(initialState);
+  const internalStateRef = useRef<InternalKeyboardState>({
+    ...initialState,
+    passthroughRequests: new Set<string>()
+  });
   
   // Focus management - use ref to avoid stale closures
   const [focusedComponent, setFocusedComponent] = useState<string | undefined>();
@@ -148,6 +151,18 @@ const KeyboardProviderComponent: React.FC<KeyboardProviderProps> = ({
     const handleKeyDown = (event: KeyboardEvent) => {
       const currentState = internalStateRef.current;
       
+      // Check if any passthrough requests are active
+      if (currentState.passthroughRequests.size > 0) {
+        // Only handle Escape key in passthrough mode
+        if (event.key === 'Escape') {
+          event.preventDefault();
+          // Clear all passthrough requests and return to normal mode
+          currentState.passthroughRequests.clear();
+          setMode('normal');
+        }
+        return;
+      }
+      
       // Fast path for insert mode - only handle Escape
       if (currentState.mode === 'insert' && event.key !== 'Escape') {
         return;
@@ -211,6 +226,14 @@ const KeyboardProviderComponent: React.FC<KeyboardProviderProps> = ({
     }
   }, []);
   
+  const requestPassthrough = useCallback((id: string) => {
+    internalStateRef.current.passthroughRequests.add(id);
+  }, []);
+  
+  const releasePassthrough = useCallback((id: string) => {
+    internalStateRef.current.passthroughRequests.delete(id);
+  }, []);
+  
   const value = useMemo(() => ({
     // Focus state
     focusedComponent,
@@ -220,7 +243,9 @@ const KeyboardProviderComponent: React.FC<KeyboardProviderProps> = ({
     unregisterFocusHandler,
     requestFocus,
     releaseFocus,
-  }), [focusedComponent, setMode, registerFocusHandler, unregisterFocusHandler, requestFocus, releaseFocus]);
+    requestPassthrough,
+    releasePassthrough,
+  }), [focusedComponent, setMode, registerFocusHandler, unregisterFocusHandler, requestFocus, releaseFocus, requestPassthrough, releasePassthrough]);
 
   return (
     <KeyboardContext.Provider value={value}>
