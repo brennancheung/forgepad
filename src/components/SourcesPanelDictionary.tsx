@@ -143,7 +143,10 @@ export function SourcesPanelDictionary({ scope, workspaceId, stackId, className 
       )}
 
       <div className="space-y-1">
-        {sources.map((source) => (
+        {sources
+          .slice()
+          .sort((a, b) => a.createdAt - b.createdAt)
+          .map((source) => (
           <div
             key={source._id}
             className="group grid grid-cols-[minmax(120px,0.25fr)_1fr_auto] gap-2 p-2 hover:bg-accent/50 rounded"
@@ -155,10 +158,17 @@ export function SourcesPanelDictionary({ scope, workspaceId, stackId, className 
             {editingId === source._id ? (
               <InlineJSONEditor
                 value={editingValue}
-                onChange={(value, isValid) => {
+                onChange={(value) => {
                   setEditingValue(value)
-                  if (isValid && value.trim()) {
-                    handleSave()
+                }}
+                onBlur={() => {
+                  handleSave()
+                  setEditingId(null)
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Escape') {
+                    setEditingId(null)
+                    setEditingValue('')
                   }
                 }}
                 minHeight={1}

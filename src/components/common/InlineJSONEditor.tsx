@@ -12,6 +12,8 @@ interface InlineJSONEditorProps {
   minHeight?: number
   maxHeight?: number
   className?: string
+  onBlur?: () => void
+  onKeyDown?: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void
 }
 
 export function InlineJSONEditor({
@@ -21,7 +23,9 @@ export function InlineJSONEditor({
   disabled = false,
   minHeight = 3,
   maxHeight = 10,
-  className
+  className,
+  onBlur,
+  onKeyDown
 }: InlineJSONEditorProps) {
   const [isValid, setIsValid] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -53,7 +57,10 @@ export function InlineJSONEditor({
   }, [onChange, validateJSON])
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Tab') {
+    // Call the parent's onKeyDown if provided
+    onKeyDown?.(e)
+    
+    if (e.key === 'Tab' && !e.defaultPrevented) {
       e.preventDefault()
       const target = e.currentTarget
       const start = target.selectionStart
@@ -66,7 +73,7 @@ export function InlineJSONEditor({
         target.selectionStart = target.selectionEnd = start + 2
       }, 0)
     }
-  }, [value, onChange, validateJSON])
+  }, [value, onChange, validateJSON, onKeyDown])
 
   useEffect(() => {
     validateJSON(value)
@@ -90,6 +97,7 @@ export function InlineJSONEditor({
         value={value}
         onChange={handleChange}
         onKeyDown={handleKeyDown}
+        onBlur={onBlur}
         placeholder={placeholder}
         disabled={disabled}
         className={cn(
