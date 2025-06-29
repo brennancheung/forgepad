@@ -140,7 +140,125 @@ function process(data) {
 }
 ```
 
-### Pattern 4: Breaking Functions into Smaller Composable Functions
+### Pattern 4: Replace For Loops with Array Methods
+```typescript
+// Instead of:
+const activeUsers = []
+for (let i = 0; i < users.length; i++) {
+  if (users[i].isActive) {
+    activeUsers.push(users[i])
+  }
+}
+
+// Use:
+const activeUsers = users.filter(user => user.isActive)
+
+// Instead of:
+const names = []
+for (let i = 0; i < users.length; i++) {
+  names.push(users[i].name)
+}
+
+// Use:
+const names = users.map(user => user.name)
+
+// Instead of:
+const results = []
+for (let i = 0; i < items.length; i++) {
+  if (items[i].isValid) {
+    results.push(processItem(items[i]))
+  }
+}
+
+// Use:
+const results = items
+  .filter(item => item.isValid)
+  .map(processItem)
+```
+
+### Pattern 5: Reduce for Accumulation
+```typescript
+// Instead of:
+let total = 0
+for (const item of items) {
+  total += item.price * item.quantity
+}
+
+// Use:
+const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0)
+
+// Instead of: Building an object
+const groupedByCategory = {}
+for (const product of products) {
+  if (!groupedByCategory[product.category]) {
+    groupedByCategory[product.category] = []
+  }
+  groupedByCategory[product.category].push(product)
+}
+
+// Use:
+const groupedByCategory = products.reduce((groups, product) => {
+  if (!groups[product.category]) groups[product.category] = []
+  groups[product.category].push(product)
+  return groups
+}, {})
+
+// Or even cleaner with nullish coalescing:
+const groupedByCategory = products.reduce((groups, product) => ({
+  ...groups,
+  [product.category]: [...(groups[product.category] ?? []), product]
+}), {})
+
+// Instead of: Finding min/max
+let maxPrice = -Infinity
+for (const product of products) {
+  if (product.price > maxPrice) {
+    maxPrice = product.price
+  }
+}
+
+// Use:
+const maxPrice = products.reduce((max, product) => 
+  Math.max(max, product.price), -Infinity)
+```
+
+### Pattern 6: Object.fromEntries with Reduce
+```typescript
+// Instead of: Transforming object keys and values
+const normalized = {}
+for (const key in data) {
+  if (data.hasOwnProperty(key)) {
+    normalized[key.toLowerCase()] = data[key].trim()
+  }
+}
+
+// Use:
+const normalized = Object.fromEntries(
+  Object.entries(data).map(([key, value]) => 
+    [key.toLowerCase(), value.trim()]
+  )
+)
+
+// Instead of: Converting array to object with computed keys
+const lookup = {}
+for (const item of items) {
+  const key = `${item.category}_${item.type}`
+  lookup[key] = item
+}
+
+// Use:
+const lookup = Object.fromEntries(
+  items.map(item => [`${item.category}_${item.type}`, item])
+)
+
+// Or with reduce when you need more control:
+const lookup = items.reduce((acc, item) => ({
+  ...acc,
+  [`${item.category}_${item.type}`]: item
+}), {})
+```
+
+### Pattern 7: Breaking Functions into Smaller Composable Functions
 ```typescript
 // Instead of:
 function processOrder(order) {
@@ -219,7 +337,7 @@ function processOrder(order) {
 }
 ```
 
-### Pattern 5: Moving Functions Outside React Components
+### Pattern 8: Moving Functions Outside React Components
 ```typescript
 // Instead of:
 function ProductCard({ product }) {

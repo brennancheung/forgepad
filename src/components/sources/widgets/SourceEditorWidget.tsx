@@ -22,7 +22,7 @@ import {
   getSourceValueError,
 } from '@convex/sources/validation'
 import { StringEditor } from './editors/StringEditor'
-import { ArrayEditor } from './editors/ArrayEditor'
+import { SourceArrayEditor } from './editors/SourceArrayEditor'
 import { JsonEditor } from './editors/JsonEditor'
 
 interface SourceEditorWidgetProps {
@@ -206,9 +206,9 @@ export function SourceEditorWidget({
         )
       case 'array':
         return (
-          <ArrayEditor
-            value={value as unknown[]}
-            onChange={setValue}
+          <SourceArrayEditor
+            items={value}
+            onItemsChange={(items) => setValue(items as SourceValue)}
             disabled={isSubmitting}
           />
         )

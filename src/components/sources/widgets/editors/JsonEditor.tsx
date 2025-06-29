@@ -15,12 +15,12 @@ interface JsonEditorProps {
   className?: string
 }
 
-export function JsonEditor({
+export const JsonEditor = ({
   value,
   onChange,
   disabled,
   className,
-}: JsonEditorProps) {
+}: JsonEditorProps) => {
   const [textValue, setTextValue] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [isValid, setIsValid] = useState(true)
@@ -36,6 +36,11 @@ export function JsonEditor({
     }
   }, [value])
 
+  // Validate JSON is an object
+  const validateJsonObject = (parsed: unknown): parsed is Record<string, unknown> => {
+    return typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)
+  }
+
   const handleTextChange = (text: string) => {
     setTextValue(text)
     
@@ -48,8 +53,7 @@ export function JsonEditor({
     try {
       const parsed = JSON.parse(text)
       
-      // Ensure it's an object, not an array or primitive
-      if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+      if (!validateJsonObject(parsed)) {
         setError('Value must be a JSON object (not an array or primitive)')
         setIsValid(false)
         return
@@ -70,9 +74,7 @@ export function JsonEditor({
       setTextValue(JSON.stringify(parsed, null, 2))
       setError(null)
       setIsValid(true)
-    } catch (_e) {
-      // Error is already shown
-    }
+    } catch {}
   }
 
   const handleCopy = () => {
@@ -81,9 +83,8 @@ export function JsonEditor({
 
   const handleImport = () => {
     const input = prompt('Paste JSON object:')
-    if (input) {
-      handleTextChange(input)
-    }
+    if (!input) return
+    handleTextChange(input)
   }
 
   return (

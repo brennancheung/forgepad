@@ -11,12 +11,12 @@ interface StringEditorProps {
   className?: string
 }
 
-export function StringEditor({
+export const StringEditor = ({
   value,
   onChange,
   disabled,
   className,
-}: StringEditorProps) {
+}: StringEditorProps) => {
   return (
     <div className={cn('space-y-2', className)}>
       <div className="flex items-center justify-between">

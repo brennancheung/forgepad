@@ -17,7 +17,7 @@ const SOURCE_REFERENCE_REGEX = /\{\{(source|user|workspace|stack):([a-zA-Z_][a-z
 /**
  * Parse source references from text
  */
-export function parseSourceReferences(text: string): SourceReference[] {
+export const parseSourceReferences = (text: string): SourceReference[] => {
   const references: SourceReference[] = []
   let match: RegExpExecArray | null
 
@@ -40,10 +40,25 @@ export function parseSourceReferences(text: string): SourceReference[] {
   return references
 }
 
+// Extract array index from path segment
+const extractArrayIndex = (current: unknown, match: RegExpMatchArray): unknown => {
+  const index = parseInt(match[1], 10)
+  if (!Array.isArray(current)) return undefined
+  if (index < 0 || index >= current.length) return undefined
+  return current[index]
+}
+
+// Extract object property from path segment
+const extractObjectProperty = (current: unknown, prop: string): unknown => {
+  if (!current || typeof current !== 'object') return undefined
+  if (!(prop in current)) return undefined
+  return (current as Record<string, unknown>)[prop]
+}
+
 /**
  * Extract value from source based on path
  */
-export function extractValueFromPath(value: unknown, path?: string): unknown {
+export const extractValueFromPath = (value: unknown, path?: string): unknown => {
   if (!path) return value
 
   let current = value
@@ -51,35 +66,35 @@ export function extractValueFromPath(value: unknown, path?: string): unknown {
   // Handle array indices like [0], [1], etc.
   const arrayMatches = path.matchAll(/\[(\d+)\]/g)
   for (const match of arrayMatches) {
-    const index = parseInt(match[1], 10)
-    if (Array.isArray(current) && index >= 0 && index < current.length) {
-      current = current[index]
-    } else {
-      return undefined
-    }
+    current = extractArrayIndex(current, match)
+    if (current === undefined) return undefined
   }
 
   // Handle object properties like .prop, .nested.prop
   const propMatches = path.matchAll(/\.([a-zA-Z0-9_]+)/g)
   for (const match of propMatches) {
-    const prop = match[1]
-    if (current && typeof current === 'object' && prop in current) {
-      current = (current as Record<string, unknown>)[prop]
-    } else {
-      return undefined
-    }
+    current = extractObjectProperty(current, match[1])
+    if (current === undefined) return undefined
   }
 
   return current
 }
 
+// Convert value to string representation
+const valueToString = (value: unknown): string => {
+  if (value === undefined || value === null) return ''
+  if (typeof value === 'string') return value
+  if (typeof value === 'object') return JSON.stringify(value, null, 2)
+  return String(value)
+}
+
 /**
  * Interpolate sources in text
  */
-export function interpolateSources(
+export const interpolateSources = (
   text: string,
   sources: Map<string, Source>
-): string {
+): string => {
   const references = parseSourceReferences(text)
   
   // Sort references by position (descending) to replace from end to start
@@ -92,18 +107,7 @@ export function interpolateSources(
     if (!source) continue
     
     const value = extractValueFromPath(source.value, ref.path)
-    
-    // Convert value to string
-    let stringValue: string
-    if (value === undefined || value === null) {
-      stringValue = ''
-    } else if (typeof value === 'string') {
-      stringValue = value
-    } else if (typeof value === 'object') {
-      stringValue = JSON.stringify(value, null, 2)
-    } else {
-      stringValue = String(value)
-    }
+    const stringValue = valueToString(value)
     
     // Replace the reference with the value
     result = result.substring(0, ref.start) + stringValue + result.substring(ref.end)
@@ -115,7 +119,7 @@ export function interpolateSources(
 /**
  * Get unique source names referenced in text
  */
-export function getReferencedSourceNames(text: string): Set<string> {
+export const getReferencedSourceNames = (text: string): Set<string> => {
   const references = parseSourceReferences(text)
   return new Set(references.map(ref => ref.name))
 }
@@ -123,17 +127,15 @@ export function getReferencedSourceNames(text: string): Set<string> {
 /**
  * Validate that all referenced sources exist
  */
-export function validateSourceReferences(
+export const validateSourceReferences = (
   text: string,
   availableSources: Set<string>
-): { valid: boolean; missing: string[] } {
+): { valid: boolean; missing: string[] } => {
   const referenced = getReferencedSourceNames(text)
   const missing: string[] = []
   
   for (const name of referenced) {
-    if (!availableSources.has(name)) {
-      missing.push(name)
-    }
+    if (!availableSources.has(name)) missing.push(name)
   }
   
   return {

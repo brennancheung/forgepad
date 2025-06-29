@@ -12,7 +12,7 @@ interface SourceInterpolationDemoProps {
   stackId?: Id<'stacks'>
 }
 
-export function SourceInterpolationDemo({ workspaceId, stackId }: SourceInterpolationDemoProps) {
+export const SourceInterpolationDemo = ({ workspaceId, stackId }: SourceInterpolationDemoProps) => {
   const [input, setInput] = useState(
     `Welcome {{user:greeting}}!
 

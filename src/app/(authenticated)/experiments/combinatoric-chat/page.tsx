@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useQuery, useMutation } from 'convex/react'
 import { api } from '@convex/_generated/api'
 import { StackView } from '@/components/stack/StackView'
-import { SourcesPanelDictionary } from '@/components/SourcesPanelDictionary'
+import { VariablesPanel } from '@/components/sources/VariablesPanel'
 import { CombinationsDisplay } from '@/components/CombinationsDisplay'
 
 const WORKSPACE_NAME = 'Combinatoric Chat'
@@ -101,7 +101,7 @@ export default function CombinatricChatPage() {
         />
       </div>
       <div className="w-[500px] border-l pl-4">
-        <SourcesPanelDictionary
+        <VariablesPanel
           scope="stack"
           workspaceId={existingWorkspace._id}
           stackId={currentStack._id}

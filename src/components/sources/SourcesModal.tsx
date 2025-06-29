@@ -23,14 +23,14 @@ interface SourcesModalProps {
   onSelectSource?: (source: Source, reference: string) => void
 }
 
-export function SourcesModal({
+export const SourcesModal = ({
   open,
   onOpenChange,
   workspaceId,
   stackId,
   mode = 'manage',
   onSelectSource
-}: SourcesModalProps) {
+}: SourcesModalProps) => {
   const [editingSource, setEditingSource] = useState<Source | null>(null)
   const [selectedSource, setSelectedSource] = useState<Source | null>(null)
   const [creatingSource, setCreatingSource] = useState(false)
@@ -41,20 +41,21 @@ export function SourcesModal({
     keyboardContext?.setMode(open ? 'insert' : 'normal')
   }, [open, keyboardContext])
 
+  // Generate reference string for source
+  const getSourceReference = (source: Source): string => {
+    if (source.stackId) return `{{stack:${source.name}}}`
+    if (source.workspaceId) return `{{workspace:${source.name}}}`
+    return `{{user:${source.name}}}`
+  }
+
   const handleSourceSelect = (source: Source) => {
     if (mode === 'picker' && onSelectSource) {
-      // Generate the reference string
-      const reference = source.stackId 
-        ? `{{stack:${source.name}}}`
-        : source.workspaceId
-        ? `{{workspace:${source.name}}}`
-        : `{{user:${source.name}}}`
-      
+      const reference = getSourceReference(source)
       onSelectSource(source, reference)
       onOpenChange(false)
-    } else {
-      setSelectedSource(source)
+      return
     }
+    setSelectedSource(source)
   }
 
   const handleQuickAddComplete = (sourceId: Id<'sources'>) => {
@@ -186,11 +187,7 @@ export function SourcesModal({
                             size="sm"
                             variant="outline"
                             onClick={() => {
-                              const reference = selectedSource.stackId 
-                                ? `{{stack:${selectedSource.name}}}`
-                                : selectedSource.workspaceId
-                                ? `{{workspace:${selectedSource.name}}}`
-                                : `{{user:${selectedSource.name}}}`
+                              const reference = getSourceReference(selectedSource)
                               navigator.clipboard.writeText(reference)
                               toast.success('Source reference copied to clipboard')
                             }}

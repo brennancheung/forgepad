@@ -1,3 +1,5 @@
+import { parseSourceVariables, getEnabledVariables } from '@/lib/sources/types'
+
 export interface SourceValue {
   name: string
   value: unknown
@@ -7,30 +9,67 @@ export interface CombinatoricResult {
   [key: string]: string
 }
 
+// Helper functions for value type checking
+const isStringValue = (value: unknown): value is string => typeof value === 'string'
+
+const isStringArray = (value: unknown): value is string[] => 
+  Array.isArray(value) && value.every(v => typeof v === 'string')
+
+const hasElements = <T>(arr: T[]): boolean => arr.length > 0
+
+// Process a single source value into valid strings
+const processSourceValue = (value: unknown): string[] | null => {
+  if (isStringValue(value)) return [value]
+  
+  if (isStringArray(value) && hasElements(value)) return value
+  
+  if (!Array.isArray(value)) return null
+  
+  // Try to parse as VariableItems
+  const variableItems = parseSourceVariables(value)
+  const enabledLabels = getEnabledVariables(variableItems)
+  
+  return hasElements(enabledLabels) ? enabledLabels : null
+}
+
 /**
  * Extracts valid values for combinatoric generation
  * - Single strings are kept as is
- * - Arrays of strings are kept
+ * - Arrays of strings are kept (even if empty)
+ * - Arrays of VariableItems are filtered to only enabled items
  * - All other types are discarded
  */
-function extractValidValues(sources: SourceValue[]): Record<string, string[]> {
+const extractValidValues = (sources: SourceValue[]): Record<string, string[]> => {
   const validValues: Record<string, string[]> = {}
   
   for (const source of sources) {
     const { name, value } = source
+    const processedValue = processSourceValue(value)
     
-    // Single string
-    if (typeof value === 'string') {
-      validValues[name] = [value]
-    }
-    // Array of strings
-    else if (Array.isArray(value) && value.every(v => typeof v === 'string')) {
-      validValues[name] = value
-    }
-    // Silently discard other types
+    if (processedValue) validValues[name] = processedValue
   }
   
   return validValues
+}
+
+// Generate combinations for a single key-value pair
+const generateCombinationsForKey = (
+  existingCombinations: CombinatoricResult[],
+  key: string,
+  values: string[]
+): CombinatoricResult[] => {
+  const newCombinations: CombinatoricResult[] = []
+  
+  for (const combination of existingCombinations) {
+    for (const value of values) {
+      newCombinations.push({
+        ...combination,
+        [key]: value
+      })
+    }
+  }
+  
+  return newCombinations
 }
 
 /**
@@ -38,32 +77,18 @@ function extractValidValues(sources: SourceValue[]): Record<string, string[]> {
  * @param sources Array of source objects with name and value
  * @returns Array of all possible combinations
  */
-export function generateCombinations(sources: SourceValue[]): CombinatoricResult[] {
+export const generateCombinations = (sources: SourceValue[]): CombinatoricResult[] => {
   const validValues = extractValidValues(sources)
   const keys = Object.keys(validValues)
   
-  if (keys.length === 0) {
-    return []
-  }
+  if (!hasElements(keys)) return []
   
   // Initialize with empty combination
   let combinations: CombinatoricResult[] = [{}]
   
   // For each key, multiply existing combinations by all possible values
   for (const key of keys) {
-    const values = validValues[key]
-    const newCombinations: CombinatoricResult[] = []
-    
-    for (const combination of combinations) {
-      for (const value of values) {
-        newCombinations.push({
-          ...combination,
-          [key]: value
-        })
-      }
-    }
-    
-    combinations = newCombinations
+    combinations = generateCombinationsForKey(combinations, key, validValues[key])
   }
   
   return combinations
@@ -73,15 +98,11 @@ export function generateCombinations(sources: SourceValue[]): CombinatoricResult
  * Counts total number of combinations without generating them
  * Useful for checking if generation would be too large
  */
-export function countCombinations(sources: SourceValue[]): number {
+export const countCombinations = (sources: SourceValue[]): number => {
   const validValues = extractValidValues(sources)
   const keys = Object.keys(validValues)
   
-  if (keys.length === 0) {
-    return 0
-  }
+  if (!hasElements(keys)) return 0
   
-  return keys.reduce((total, key) => {
-    return total * validValues[key].length
-  }, 1)
+  return keys.reduce((total, key) => total * validValues[key].length, 1)
 }

@@ -51,54 +51,66 @@ export const SourceWidgetEvents = {
 } as const
 
 // Initialize the widget manager
-export function initSourceWidgetManager(manager: SourceWidgetManager) {
+export const initSourceWidgetManager = (manager: SourceWidgetManager): void => {
   widgetManager = manager
 }
 
 // Get the current widget manager
-export function getSourceWidgetManager(): SourceWidgetManager {
-  if (!widgetManager) {
-    throw new Error('Source widget manager not initialized')
-  }
+export const getSourceWidgetManager = (): SourceWidgetManager => {
+  if (!widgetManager) throw new Error('Source widget manager not initialized')
   return widgetManager
 }
 
 // Programmatic API functions
-export async function openSourcePicker(options: PickerOptions) {
+export const openSourcePicker = async (options: PickerOptions): Promise<void> => {
   sourceEvents.dispatchEvent(new CustomEvent(SourceWidgetEvents.OPEN_PICKER, { detail: options }))
 }
 
-export async function quickAddSource(options: QuickAddOptions = {}) {
+export const quickAddSource = async (options: QuickAddOptions = {}): Promise<void> => {
   sourceEvents.dispatchEvent(new CustomEvent(SourceWidgetEvents.OPEN_QUICK_ADD, { detail: options }))
 }
 
-export async function editSource(sourceId: Id<'sources'> | Source) {
+export const editSource = async (sourceId: Id<'sources'> | Source): Promise<void> => {
   sourceEvents.dispatchEvent(new CustomEvent(SourceWidgetEvents.OPEN_EDITOR, { detail: sourceId }))
 }
 
-export function toggleSourceSidebar() {
+export const toggleSourceSidebar = (): void => {
   sidebarVisible = !sidebarVisible
   sourceEvents.dispatchEvent(new CustomEvent(SourceWidgetEvents.TOGGLE_SIDEBAR, { detail: sidebarVisible }))
 }
 
-// Batch operations
-export async function addSourcesToScope(
+// Get scope name from options
+const getScopeName = (scope: ScopeOptions): string => {
+  if (scope.stackId) return 'stack'
+  if (scope.workspaceId) return 'workspace'
+  return 'user'
+}
+
+// Move multiple sources to scope
+const moveSourcesToScope = (
   sourceIds: Id<'sources'>[],
   scope: ScopeOptions,
   moveSource: (args: { id: Id<'sources'>; newWorkspaceId?: Id<'workspaces'>; newStackId?: Id<'stacks'> }) => Promise<unknown>
-) {
+): Promise<unknown[]> => {
+  const promises = sourceIds.map(id => 
+    moveSource({
+      id,
+      newWorkspaceId: scope.workspaceId,
+      newStackId: scope.stackId,
+    })
+  )
+  return Promise.all(promises)
+}
+
+// Batch operations
+export const addSourcesToScope = async (
+  sourceIds: Id<'sources'>[],
+  scope: ScopeOptions,
+  moveSource: (args: { id: Id<'sources'>; newWorkspaceId?: Id<'workspaces'>; newStackId?: Id<'stacks'> }) => Promise<unknown>
+): Promise<void> => {
   try {
-    const promises = sourceIds.map(id => 
-      moveSource({
-        id,
-        newWorkspaceId: scope.workspaceId,
-        newStackId: scope.stackId,
-      })
-    )
-    
-    await Promise.all(promises)
-    
-    const scopeName = scope.stackId ? 'stack' : scope.workspaceId ? 'workspace' : 'user'
+    await moveSourcesToScope(sourceIds, scope, moveSource)
+    const scopeName = getScopeName(scope)
     toast.success(`Added ${sourceIds.length} source(s) to ${scopeName} scope`)
   } catch (error) {
     toast.error('Failed to add sources to scope')
@@ -106,21 +118,12 @@ export async function addSourcesToScope(
   }
 }
 
-export async function removeSourcesFromScope(
+export const removeSourcesFromScope = async (
   sourceIds: Id<'sources'>[],
   moveSource: (args: { id: Id<'sources'>; newWorkspaceId?: Id<'workspaces'>; newStackId?: Id<'stacks'> }) => Promise<unknown>
-) {
+): Promise<void> => {
   try {
-    const promises = sourceIds.map(id => 
-      moveSource({
-        id,
-        newWorkspaceId: undefined,
-        newStackId: undefined,
-      })
-    )
-    
-    await Promise.all(promises)
-    
+    await moveSourcesToScope(sourceIds, { workspaceId: undefined, stackId: undefined }, moveSource)
     toast.success(`Moved ${sourceIds.length} source(s) to user scope`)
   } catch (error) {
     toast.error('Failed to remove sources from scope')
@@ -128,41 +131,60 @@ export async function removeSourcesFromScope(
   }
 }
 
-// Helper to insert source reference at cursor
-export function insertSourceReference(
-  source: Source,
-  scope?: SourceScope,
-  element?: HTMLTextAreaElement | HTMLInputElement
-) {
-  const actualScope = scope || getSourceScope(source)
-  const reference = actualScope === 'user' 
-    ? `{{source:${source.name}}}`
-    : `{{${actualScope}:${source.name}}}`
-  
-  if (element) {
-    const start = element.selectionStart || 0
-    const end = element.selectionEnd || 0
-    const text = element.value
-    const before = text.substring(0, start)
-    const after = text.substring(end)
-    
-    element.value = before + reference + after
-    element.setSelectionRange(start + reference.length, start + reference.length)
-    element.focus()
-    
-    // Trigger input event for React
-    const event = new Event('input', { bubbles: true })
-    element.dispatchEvent(event)
-  } else {
-    // Copy to clipboard as fallback
-    navigator.clipboard.writeText(reference)
-    toast.success('Source reference copied to clipboard')
-  }
-}
-
 // Helper to get source scope
-function getSourceScope(source: Source): SourceScope {
+const getSourceScope = (source: Source): SourceScope => {
   if (source.stackId) return 'stack'
   if (source.workspaceId) return 'workspace'
   return 'user'
 }
+
+// Build source reference string
+const buildSourceReference = (source: Source, scope?: SourceScope): string => {
+  const actualScope = scope || getSourceScope(source)
+  return actualScope === 'user' 
+    ? `{{source:${source.name}}}`
+    : `{{${actualScope}:${source.name}}}`
+}
+
+// Insert text at cursor position
+const insertTextAtCursor = (
+  element: HTMLTextAreaElement | HTMLInputElement,
+  text: string
+): void => {
+  const start = element.selectionStart || 0
+  const end = element.selectionEnd || 0
+  const value = element.value
+  const before = value.substring(0, start)
+  const after = value.substring(end)
+  
+  element.value = before + text + after
+  element.setSelectionRange(start + text.length, start + text.length)
+  element.focus()
+  
+  // Trigger input event for React
+  const event = new Event('input', { bubbles: true })
+  element.dispatchEvent(event)
+}
+
+// Copy reference to clipboard
+const copyReferenceToClipboard = async (reference: string): Promise<void> => {
+  await navigator.clipboard.writeText(reference)
+  toast.success('Source reference copied to clipboard')
+}
+
+// Helper to insert source reference at cursor
+export const insertSourceReference = (
+  source: Source,
+  scope?: SourceScope,
+  element?: HTMLTextAreaElement | HTMLInputElement
+): void => {
+  const reference = buildSourceReference(source, scope)
+  
+  if (element) {
+    insertTextAtCursor(element, reference)
+    return
+  }
+  
+  copyReferenceToClipboard(reference)
+}
+

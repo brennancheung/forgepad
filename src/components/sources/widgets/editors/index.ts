@@ -1,3 +1,5 @@
 export { StringEditor } from './StringEditor'
-export { ArrayEditor } from './ArrayEditor'
+export { SourceArrayEditor } from './SourceArrayEditor'
 export { JsonEditor } from './JsonEditor'
+export { EditableText } from './EditableText'
+export { VariableItemEditor } from './VariableItemEditor'
